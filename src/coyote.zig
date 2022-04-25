@@ -1,6 +1,7 @@
 const std = @import("std");
-pub const jinja = @import("jinja");
-pub const http = @import("iwnet");
+const jinja = @import("jinja");
+const http = @import("iwnet");
+const db = @import("zq");
 
 const log = std.log.scoped(.coyote);
 

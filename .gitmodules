@@ -1,3 +1,6 @@
 [submodule "vendor/iwnet"]
 	path = vendor/iwnet
 	url = https://github.com/Softmotions/iwnet.git
+[submodule "vendor/zq"]
+	path = vendor/zq
+	url = https://github.com/frmdstryr/zq.git

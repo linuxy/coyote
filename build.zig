@@ -9,10 +9,14 @@ const pkgs = struct {
         .name = "iwnet",
         .path = .{ .path = "./vendor/iwnet.zig" },
     };
+    const zq = std.build.Pkg{
+        .name = "zq",
+        .path = .{ .path = "./vendor/zq/src/zq.zig" },
+    };
     const coyote = std.build.Pkg{
         .name = "coyote",
         .path = .{ .path = "./src/coyote.zig" },
-        .dependencies = &[_]std.build.Pkg{ pkgs.iwnet, pkgs.jinja },
+        .dependencies = &[_]std.build.Pkg{ pkgs.iwnet, pkgs.jinja, pkgs.zq },
     };
 };
 
@@ -23,6 +27,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.setBuildMode(mode);
     exe.addPackage(pkgs.jinja);
     exe.addPackage(pkgs.iwnet);
+    exe.addPackage(pkgs.zq);
     exe.addPackage(pkgs.coyote);
     exe.addIncludeDir("/usr/include/python3.9");
     exe.linkSystemLibrary("python3.9");
