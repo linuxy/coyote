@@ -25,5 +25,4 @@ pub const coyote_index = struct {
         try Coyote.response(req, 200, "text/plain", rendered, data);
         return Coyote.Processed;
     }
-    //render template fn, gather and inject env variables
 };

@@ -46,7 +46,7 @@ pub fn init() !Coyote {
     return Coyote{};
 }
 
-pub fn connect(conf: anytype) !void {
+pub fn database(self: *Coyote, conf: anytype) !void {
     db_engine = db.Engine(.postgres).init(allocator, .{
         .host = conf.host,
         .port = conf.port,
@@ -54,6 +54,7 @@ pub fn connect(conf: anytype) !void {
         .pass = conf.pass,
         .db = conf.db,
     });
+    _ = self;
 }
 
 pub fn save(model: anytype) !void {
@@ -183,7 +184,7 @@ pub fn config(self: *Coyote, conf: anytype) !void {
     }
 
     spec.poller = http.poller;
-    _ = self;
+    try self.routes();
 }
 
 //Create IWN server and poll

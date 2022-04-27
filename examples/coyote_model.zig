@@ -1,5 +1,5 @@
 const std = @import("std");
-const log = std.log.scoped(.echo);
+const log = std.log.scoped(.model);
 const Coyote = @import("coyote");
 const Db = Coyote.Db;
 
@@ -7,7 +7,11 @@ pub fn main() !void {
     var coyote = try Coyote.init();
     defer coyote.deinit();
     try coyote.templates("examples/templates/");
-    try coyote.routes();
+    try coyote.database(.{.host = "localhost",
+                          .port = 5434,
+                          .user = "test",
+                          .pass = "test",
+                          .db = "testdb"});
     try coyote.config(.{.listen = "localhost",
                         .port = 8080});
     try coyote.run();
@@ -47,5 +51,4 @@ pub const coyote_user = struct {
         try Coyote.response(req, 200, "text/plain", rendered, data);
         return Coyote.Processed;
     }
-    //render template fn, gather and inject env variables
 };
