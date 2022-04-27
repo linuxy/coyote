@@ -23,7 +23,7 @@ const pkgs = struct {
 pub fn build(b: *std.build.Builder) void {
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("echo", "examples/coyote_template.zig");
+    const exe = b.addExecutable("echo", "examples/coyote_model.zig");
     exe.setBuildMode(mode);
     exe.addPackage(pkgs.jinja);
     exe.addPackage(pkgs.iwnet);

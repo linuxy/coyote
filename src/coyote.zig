@@ -13,10 +13,14 @@ pub const Put = http.IWN_WF_PUT;
 pub const Post = http.IWN_WF_POST;
 pub const All = http.IWN_WF_METHODS_ALL;
 pub const Processed = http.IWN_WF_RES_PROCESSED;
+pub const Value = http.struct_iwn_val;
+pub const Db = @This();
 
 var spec: http.iwn_wf_server_spec = undefined;
 var data: ?*anyopaque = undefined;
 var allocator = std.heap.c_allocator;
+pub var db_engine: ?db.Engine(.postgres) = undefined;
+pub var db_conn: ?db.Connection = undefined;
 
 //separate this by view? namespace?
 pub export var jinja_env: ?*anyopaque = undefined;
@@ -40,6 +44,20 @@ pub fn init() !Coyote {
     try ec(http.iw_init());
     try ec(http.iwn_wf_create(0, @ptrCast([*c][*c]http.struct_iwn_wf_ctx, &http.ctx)));
     return Coyote{};
+}
+
+pub fn connect(conf: anytype) !void {
+    db_engine = db.Engine(.postgres).init(allocator, .{
+        .host = conf.host,
+        .port = conf.port,
+        .user = conf.user,
+        .pass = conf.pass,
+        .db = conf.db,
+    });
+}
+
+pub fn save(model: anytype) !void {
+    _ = model;
 }
 
 pub fn templates(self: *Coyote, directory: [*:0]const u8) !void {
@@ -117,6 +135,44 @@ pub fn routes(self: *Coyote) !void {
     _ = self;
 }
 
+pub fn queryValue(req: Request, key: [*:0]const u8) !?[]u8 {
+
+    var value: Value = http.iwn_pair_find_val(&req.*.query_params, key, @intCast(isize, std.mem.span(key).len));
+    if(value.buf != 0) {
+        var found = std.mem.sliceTo(value.buf, 0);
+        return found;
+    }
+    return null;
+}
+
+pub fn formValue(req: Request, key: [*:0]const u8) !?[]u8 {
+
+    var value: Value = http.iwn_pair_find_val(&req.*.form_params, key, @intCast(isize, std.mem.span(key).len));
+    if(value.buf != 0) {
+        var found = std.mem.sliceTo(value.buf, 0);
+        return found;
+    }
+    return null;
+}
+
+//Fix?
+pub fn multiFormValue(req: Request, key: [*:0]const u8) !std.ArrayList([]u8) {
+
+    var value_array: std.ArrayList([]u8) = std.ArrayList([]u8).init(allocator);
+    var value: Value = http.iwn_pair_find_val(&req.*.form_params, key, @intCast(isize, std.mem.span(key).len));
+    while(value.buf != 0) {
+        try value_array.append(std.mem.sliceTo(value.buf, 0));
+        if(value.next != 0) {
+            value = value.next.*;
+        } else {
+            break;
+        }
+    }
+
+    //owner must deinit()
+    return value_array;
+}
+
 //Zero the struct and fill opportunistically
 pub fn config(self: *Coyote, conf: anytype) !void {
     try ec(http.iwn_poller_create(0, 0, &http.poller));
@@ -142,6 +198,9 @@ pub fn run(self: *Coyote) !void {
 //Destruct any allocations
 pub fn deinit(self: *Coyote) void {
     jinja.free_environment(jinja_env);
+    if(db_engine != null)
+        db_engine.?.deinit();
+
     log.info("deinit()", .{});
     _ = self;
 }
@@ -172,3 +231,4 @@ pub fn ec(err: u64) !void {
 //Swagger generator
 //Migrations
 //Emailer
+//Structured logging middleware
