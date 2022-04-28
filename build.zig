@@ -23,6 +23,8 @@ const pkgs = struct {
 pub fn build(b: *std.build.Builder) void {
     const mode = b.standardReleaseOptions();
 
+    const iwnet = build_iwnet(b);
+
     const exe = b.addExecutable("echo", "examples/coyote_model.zig");
     exe.setBuildMode(mode);
     exe.addPackage(pkgs.jinja);
@@ -32,6 +34,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.addIncludeDir("/usr/include/python3.9");
     exe.linkSystemLibrary("python3.9");
 
+    exe.step.dependOn(&iwnet.step);
     exe.addLibraryPath("./vendor/iwnet/build/src");
     exe.addLibraryPath("./vendor/iwnet/build/lib");
     exe.linkSystemLibrary("iwnet-1");
@@ -39,4 +42,40 @@ pub fn build(b: *std.build.Builder) void {
 
     exe.linkLibC();
     exe.install();
+    
+    const run_cmd = exe.run();
+    run_cmd.step.dependOn(b.getInstallStep());
+
+    const run_step = b.step("run", "Run the app");
+    run_step.dependOn(&run_cmd.step);
+}
+
+
+fn build_iwnet(b: *std.build.Builder) *std.build.RunStep {
+
+    const mkdir = b.addSystemCommand(
+        &[_][]const u8{
+            "mkdir",
+            "-p",
+            "./vendor/iwnet/build",
+        },
+    );
+    const cmake = b.addSystemCommand(
+        &[_][]const u8{
+            "cmake",
+            "-S./vendor/iwnet/",
+            "-B./vendor/iwnet/build",
+            "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
+        },
+    );
+    const make = b.addSystemCommand(
+        &[_][]const u8{
+            "make",
+            "-j4",
+            "-C./vendor/iwnet/build",
+        },
+    );
+    cmake.step.dependOn(&mkdir.step);
+    make.step.dependOn(&cmake.step);
+    return make;
 }

@@ -221,6 +221,7 @@ pub fn ec(err: u64) !void {
     }
 }
 
+//Escape inputs
 //Create error handler, error struct
 //Config JSON or KV loader
 //MVC / MVVM / MVT architecture https://www.tutorialspoint.com/django/django_models.htm
