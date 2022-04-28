@@ -47,7 +47,7 @@ pub const coyote_user = struct {
                         .hashedpass = try Coyote.formValue(req, "password"),
                         .email = try Coyote.formValue(req, "email")};
         try Db.save(user);
-        var rendered = Coyote.render("user.html", .{.name = "Zero", .surname = "Ziguana"});
+        var rendered = Coyote.render("user.html", .{.object = "User", .status = "created successfully"});
         try Coyote.response(req, 200, "text/plain", rendered, data);
         return Coyote.Processed;
     }
