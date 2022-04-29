@@ -83,8 +83,8 @@ pub fn render(path: [*:0] const u8, vars: anytype) [:0]const u8 {
     return rendered_utf8;
 }
 
-pub fn response(req: [*c]http.iwn_wf_req, code: u32, mime: [:0]const u8, body: [:0]const u8, user_data: ?*anyopaque) !void {
-    _ = http.iwn_http_response_printf(req.*.http, @intCast(c_int, code), mime, "%.*s\n",
+pub fn response(req: [*c]http.iwn_wf_req, code: u32, mime: []const u8, body: []const u8, user_data: ?*anyopaque) !void {
+    _ = http.iwn_http_response_printf(req.*.http, @intCast(c_int, code), @ptrCast([*c]const u8, mime), "%.*s\n",
                                 body.len, @ptrCast([*:0]const u8, body), @ptrCast([*c]const u8, &user_data));
 }
 
@@ -136,9 +136,9 @@ pub fn routes(self: *Coyote) !void {
     _ = self;
 }
 
-pub fn queryValue(req: Request, key: [*:0]const u8) !?[]u8 {
+pub fn queryValue(req: Request, key: []const u8) !?[]u8 {
 
-    var value: Value = http.iwn_pair_find_val(&req.*.query_params, key, @intCast(isize, std.mem.span(key).len));
+    var value: Value = http.iwn_pair_find_val(&req.*.query_params, @ptrCast([*c]const u8, key), @intCast(isize, key.len));
     if(value.buf != 0) {
         var found = std.mem.sliceTo(value.buf, 0);
         return found;
@@ -146,9 +146,9 @@ pub fn queryValue(req: Request, key: [*:0]const u8) !?[]u8 {
     return null;
 }
 
-pub fn formValue(req: Request, key: [*:0]const u8) !?[]u8 {
+pub fn formValue(req: Request, key: []const u8) !?[]u8 {
 
-    var value: Value = http.iwn_pair_find_val(&req.*.form_params, key, @intCast(isize, std.mem.span(key).len));
+    var value: Value = http.iwn_pair_find_val(&req.*.form_params, @ptrCast([*c]const u8, key), @intCast(isize, key.len));
     if(value.buf != 0) {
         var found = std.mem.sliceTo(value.buf, 0);
         return found;
@@ -157,10 +157,10 @@ pub fn formValue(req: Request, key: [*:0]const u8) !?[]u8 {
 }
 
 //Fix?
-pub fn multiFormValue(req: Request, key: [*:0]const u8) !std.ArrayList([]u8) {
+pub fn multiFormValue(req: Request, key: []const u8) !std.ArrayList([]u8) {
 
     var value_array: std.ArrayList([]u8) = std.ArrayList([]u8).init(allocator);
-    var value: Value = http.iwn_pair_find_val(&req.*.form_params, key, @intCast(isize, std.mem.span(key).len));
+    var value: Value = http.iwn_pair_find_val(&req.*.form_params, @ptrCast([*c]const u8, key), @intCast(isize, key.len));
     while(value.buf != 0) {
         try value_array.append(std.mem.sliceTo(value.buf, 0));
         if(value.next != 0) {

@@ -34,7 +34,8 @@ pub fn build(b: *std.build.Builder) void {
     exe.addIncludeDir("/usr/include/python3.9");
     exe.linkSystemLibrary("python3.9");
 
-    exe.step.dependOn(&iwnet.step);
+    //exe.step.dependOn(&iwnet.step); //gate this behind flag?
+    _ = iwnet;
     exe.addLibraryPath("./vendor/iwnet/build/src");
     exe.addLibraryPath("./vendor/iwnet/build/lib");
     exe.linkSystemLibrary("iwnet-1");
