@@ -34,7 +34,7 @@ pub const User = struct {
     };
 };
 
-pub const coyote_user = struct {
+pub const coyote_user = struct { 
     const Self = @This();
 
     route: [*:0]const u8 = "/user",
@@ -47,7 +47,7 @@ pub const coyote_user = struct {
                         .hashedpass = try Coyote.formValue(req, "password"),
                         .email = try Coyote.formValue(req, "email")};
         try Db.save(user);
-        var rendered = Coyote.render("user.html", .{.object = "user", .status = "created successfully"});
+        var rendered = Coyote.render("user.html", .{.object = user.username, .status = "created successfully"});
         try Coyote.response(req, 200, "text/plain", rendered, data);
         return Coyote.Processed;
     }

@@ -66,7 +66,7 @@ pub fn templates(self: *Coyote, directory: [*:0]const u8) !void {
     _ = self;
 }
 
-pub fn render(path: [*:0] const u8, vars: anytype) [:0]const u8 {
+pub fn render(path: [*:0] const u8, vars: anytype) []const u8 {
     var template = jinja.get_template(jinja_env, path);
     var vars_array: [@typeInfo(@TypeOf(vars)).Struct.fields.len * 2][*:0]const u8 = undefined;
 
@@ -74,7 +74,20 @@ pub fn render(path: [*:0] const u8, vars: anytype) [:0]const u8 {
     inline for (std.meta.fields(@TypeOf(vars))) |member| {
         log.info("member name: {s} value: {s} total: {}, idx: {}", .{member.name, @field(vars, member.name), @typeInfo(@TypeOf(vars)).Struct.fields.len, i});
         vars_array[i] = @ptrCast([*:0]const u8, member.name);
-        vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name));
+        
+        //Todo: ?*
+        //Dereference pointer
+        if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Pointer)
+            vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name))
+        else
+            vars_array[i + 1] = @ptrCast([*:0]const u8, &@field(vars, member.name));
+
+        //Dereference optional
+        if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Optional)
+            vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name).?)
+        else
+            vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name));
+
         i += 2;
     }
     var rendered = jinja.render(@ptrCast(?*anyopaque, template), @as(c_int, @typeInfo(@TypeOf(vars)).Struct.fields.len * 2), @ptrCast([*c][*:0]const u8, &vars_array));
