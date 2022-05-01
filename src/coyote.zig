@@ -46,6 +46,23 @@ pub fn init() !Coyote {
     return Coyote{};
 }
 
+var global_fn: fn(req: Request, data: Data) u32 = undefined;
+
+pub fn Handler(callback_fn: fn(req: Request, user_data: Data) u32) fn(req: Request, user_data: Data) callconv (.C) c_int {
+    global_fn = callback_fn;
+
+    const cb = struct {
+        pub fn cb(
+            req: Request,
+            user_data: Data,
+        ) callconv (.C) c_int {
+            return @intCast(c_int, global_fn(req, user_data));
+        }
+    }.cb;
+
+    return cb;
+}
+
 pub fn database(self: *Coyote, conf: anytype) !void {
     db_engine = db.Engine(.postgres).init(allocator, .{
         .host = conf.host,
@@ -122,7 +139,7 @@ pub fn routes(self: *Coyote) !void {
                     log.info("found route_pattern, {s}", .{route_pattern});
                 }
                 if(std.mem.eql(u8, member.name, "handler")) {
-                    route_handler = member_type.handler;
+                    route_handler = Handler(member_type.handler);
                     log.info("found handler, {s}", .{route_handler});
                 }
                 if(std.mem.eql(u8, member.name, "flags")) {
@@ -244,6 +261,6 @@ pub fn ec(err: u64) !void {
 //Hot reload + inotify
 //REST example
 //Swagger generator
-//Migrations
+//Migrations, zig-yaml + Pyrseas
 //Emailer
 //Structured logging middleware

@@ -39,10 +39,10 @@ pub const coyote_user = struct {
 
     route: [*:0]const u8 = "/user",
     template: [*:0]const u8 = "user.html",
-    handler: fn(req: Coyote.Request, data: Coyote.Data) callconv(.C) c_int = handler,
     flags: u32 = Coyote.Post,
+    handler: fn(req: Coyote.Request, data: Coyote.Data) u32 = handler,
 
-    pub fn handler(req: Coyote.Request, data: Coyote.Data) callconv(.C) c_int {
+    pub fn handler(req: Coyote.Request, data: Coyote.Data) u32 {
         var user = User{.username = try Coyote.formValue(req, "user"),
                         .hashedpass = try Coyote.formValue(req, "password"),
                         .email = try Coyote.formValue(req, "email")};
