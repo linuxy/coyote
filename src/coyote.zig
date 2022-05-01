@@ -11,6 +11,12 @@ pub const Request = [*c]http.iwn_wf_req;
 pub const Get = http.IWN_WF_GET;
 pub const Put = http.IWN_WF_PUT;
 pub const Post = http.IWN_WF_POST;
+pub const Head = http.IWN_WF_HEAD;
+pub const Delete = http.IWN_WF_DELETE;
+pub const Patch = http.IWN_WF_PATCH;
+pub const Options = http.IWN_WF_OPTIONS;
+pub const Connect = http.IWN_WF_CONNECT;
+pub const Trace = http.IWN_WF_TRACE;
 pub const All = http.IWN_WF_METHODS_ALL;
 pub const Processed = http.IWN_WF_RES_PROCESSED;
 pub const Value = http.struct_iwn_val;
@@ -121,7 +127,7 @@ pub fn response(req: [*c]http.iwn_wf_req, code: u32, mime: []const u8, body: []c
 //Dynamically build these from loaded template directory
 pub fn routes(self: *Coyote) !void {
     var route: http.struct_iwn_wf_route = undefined;
-    var route_pattern: [*:0]const u8 = undefined;
+    var route_pattern: ?[]const u8 = undefined;
     var route_handler: fn(req: Request, data: Data) callconv(.C) c_int = undefined;
     var route_flags: u32 = undefined;
 
@@ -147,9 +153,9 @@ pub fn routes(self: *Coyote) !void {
                     log.info("found flags, {}", .{route_flags});
                 }
             }
-            if(route_pattern != undefined) {
+            if(route_pattern != null) {
                 route = std.mem.zeroes(http.struct_iwn_wf_route);
-                route.pattern = route_pattern;
+                route.pattern = @ptrCast([*:0]const u8, route_pattern.?);
             }
 
             if(route_handler != undefined)

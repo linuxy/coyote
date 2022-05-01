@@ -15,12 +15,12 @@ pub fn main() !void {
 pub const coyote_index = struct {
     const Self = @This();
 
-    route: [*:0]const u8 = "/index",
-    template: [*:0]const u8 = "index.html",
+    route: []const u8 = "/index",
+    template: []const u8 = "index.html",
     handler: fn(req: Coyote.Request, data: Coyote.Data) u32 = handler,
     flags: u32 = Coyote.All,
 
-    pub fn handler(req: Coyote.Request, data: Coyote.Data) callconv(.C) c_int {
+    pub fn handler(req: Coyote.Request, data: Coyote.Data) u32 {
         var rendered = Coyote.render("index.html", .{.name = "Zero", .surname = "Ziguana"});
         try Coyote.response(req, 200, "text/plain", rendered, data);
         return Coyote.Processed;

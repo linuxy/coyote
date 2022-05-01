@@ -37,9 +37,9 @@ pub const User = struct {
 pub const coyote_user = struct { 
     const Self = @This();
 
-    route: [*:0]const u8 = "/user",
-    template: [*:0]const u8 = "user.html",
-    flags: u32 = Coyote.Post,
+    route: []const u8 = "/user",
+    template: []const u8 = "user.html",
+    flags: u32 = (Coyote.Post | Coyote.Put),
     handler: fn(req: Coyote.Request, data: Coyote.Data) u32 = handler,
 
     pub fn handler(req: Coyote.Request, data: Coyote.Data) u32 {
