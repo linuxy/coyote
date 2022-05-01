@@ -127,7 +127,7 @@ pub fn response(req: [*c]http.iwn_wf_req, code: u32, mime: []const u8, body: []c
 //Dynamically build these from loaded template directory
 pub fn routes(self: *Coyote) !void {
     var route: http.struct_iwn_wf_route = undefined;
-    var route_pattern: ?[]const u8 = undefined;
+    var route_pattern: ?[]const u8 = null;
     var route_handler: fn(req: Request, data: Data) callconv(.C) c_int = undefined;
     var route_flags: u32 = undefined;
 
