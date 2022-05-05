@@ -6,7 +6,6 @@ pub fn main() !void {
     var coyote = try Coyote.init();
     defer coyote.deinit();
     try coyote.templates("examples/templates/");
-    try coyote.routes();
     try coyote.config(.{.listen = "localhost",
                         .port = 8080});
     try coyote.run();

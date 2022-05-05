@@ -225,7 +225,7 @@ pub fn config(self: *Coyote, conf: anytype) !void {
 
 //Create IWN server and poll
 pub fn run(self: *Coyote) !void {
-    std.os.sigaction(std.os.SIG.INT, &act, null);
+    try std.os.sigaction(std.os.SIG.INT, &act, null);
     http.iwn_wf_route_print(http.ctx.*.root, http.stderr);
     try ec(http.iwn_wf_server(&spec, http.ctx));
     http.iwn_poller_poll(http.poller);
