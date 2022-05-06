@@ -89,6 +89,7 @@ pub fn templates(self: *Coyote, directory: [*:0]const u8) !void {
     _ = self;
 }
 
+//Todo: render any type
 pub fn render(path: [*:0] const u8, vars: anytype) []const u8 {
     var template = jinja.get_template(jinja_env, path);
     var vars_array: [@typeInfo(@TypeOf(vars)).Struct.fields.len * 2][*:0]const u8 = undefined;
@@ -106,8 +107,10 @@ pub fn render(path: [*:0] const u8, vars: anytype) []const u8 {
             vars_array[i + 1] = @ptrCast([*:0]const u8, &@field(vars, member.name));
 
         //Dereference optional
-        if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Optional)
+        if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Optional and (@field(vars, member.name) != null))
             vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name).?)
+        else if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Optional)
+            _ = i
         else
             vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name));
 
@@ -180,6 +183,23 @@ pub fn queryValue(req: Request, key: []const u8) !?[]u8 {
         return found;
     }
     return null;
+}
+
+pub fn multiQueryValue(req: Request, key: []const u8) !std.ArrayList([]u8) {
+
+    var value_array: std.ArrayList([]u8) = std.ArrayList([]u8).init(allocator);
+    var value: Value = http.iwn_pair_find_val(&req.*.query_params, @ptrCast([*c]const u8, key), @intCast(isize, key.len));
+    while(value.buf != 0) {
+        try value_array.append(std.mem.sliceTo(value.buf, 0));
+        if(value.next != 0) {
+            value = value.next.*;
+        } else {
+            break;
+        }
+    }
+
+    //owner must deinit()
+    return value_array;
 }
 
 pub fn formValue(req: Request, key: []const u8) !?[]u8 {

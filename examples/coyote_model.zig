@@ -23,7 +23,7 @@ pub const coyote_user = struct {
 
     route: []const u8 = "/user",
     template: []const u8 = "user.html",
-    flags: u32 = (Coyote.Post | Coyote.Put),
+    flags: u32 = (Coyote.Post | Coyote.Put | Coyote.Get),
     handler: fn(req: Coyote.Request, data: Coyote.Data) u32 = handler,
 
     pub fn handler(req: Coyote.Request, data: Coyote.Data) u32 {
