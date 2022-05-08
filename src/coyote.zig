@@ -28,15 +28,17 @@ var allocator = std.heap.c_allocator;
 pub var db_engine: ?db.Engine(.postgres) = undefined;
 pub var db_conn: ?db.Connection = undefined;
 
+//rework for async // one env per thread
 pub export var jinja_env: ?*anyopaque = undefined;
+var template_cache: std.AutoHashMap([*:0]const u8, ?*anyopaque) = undefined;
 
 var act = std.os.Sigaction{
-    .handler = .{.sigaction = signal_handler },
+    .handler = .{.sigaction = signalHandler },
     .mask = std.os.empty_sigset,
     .flags = 0,
 };
 
-pub fn signal_handler(sig: i32, sig_info: *const std.os.siginfo_t, ctx_ptr: ?*const anyopaque) callconv(.C) void {
+pub fn signalHandler(sig: i32, sig_info: *const std.os.siginfo_t, ctx_ptr: ?*const anyopaque) callconv(.C) void {
     http.iwn_poller_shutdown_request(http.poller);
     log.info("Graceful exit requested.", .{});
     _ = sig;
@@ -48,11 +50,13 @@ pub fn signal_handler(sig: i32, sig_info: *const std.os.siginfo_t, ctx_ptr: ?*co
 pub fn init() !Coyote {
     try ec(http.iw_init());
     try ec(http.iwn_wf_create(0, @ptrCast([*c][*c]http.struct_iwn_wf_ctx, &http.ctx)));
+    template_cache = std.AutoHashMap([*:0]const u8, ?*anyopaque).init(allocator);
     return Coyote{};
 }
 
 var global_fn: fn(req: Request, data: Data) u32 = undefined;
 
+//This removes the callconv requirement
 pub fn Handler(callback_fn: fn(req: Request, user_data: Data) u32) fn(req: Request, user_data: Data) callconv (.C) c_int {
     global_fn = callback_fn;
 
@@ -85,12 +89,26 @@ pub fn save(model: anytype) !void {
 
 pub fn templates(self: *Coyote, directory: [*:0]const u8) !void {
     jinja_env = jinja.init_environment(directory);
+    try cacheTemplates(directory);
     _ = self;
 }
 
-//Render templates with value dictionary, supports ?*value, *value, value
-pub fn render(path: [*:0] const u8, vars: anytype) []const u8 {
-    var template = jinja.get_template(jinja_env, path);
+pub fn cacheTemplates(path: [*:0]const u8) !void {
+    _ = path;
+}
+
+//Render templates with value dictionary, supports ?*value, *value, ?value, value
+pub fn render(path: [*:0]const u8, vars: anytype) []const u8 {
+    var cache = template_cache.get(path);
+    var template: ?*anyopaque = undefined;
+    if(cache != null) {
+        template = cache.?;
+        log.info("template: {s} cached.", .{path});
+    } else {
+        template = jinja.get_template(jinja_env, path);
+        template_cache.put(path, template) catch unreachable;
+    }
+
     var vars_array: [@typeInfo(@TypeOf(vars)).Struct.fields.len * 2][*:0]const u8 = undefined;
 
     var i: usize = 0;
@@ -107,7 +125,7 @@ pub fn render(path: [*:0] const u8, vars: anytype) []const u8 {
             } else {
                 vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name));
             }
-        } else if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Optional) {
+        } else if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Optional and @field(vars, member.name) != null) {
             vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name).?);
         } else {
             vars_array[i + 1] = @ptrCast([*:0]const u8, &@field(vars, member.name));
