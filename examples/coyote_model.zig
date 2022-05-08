@@ -2,7 +2,7 @@ const std = @import("std");
 const log = std.log.scoped(.model);
 const Coyote = @import("coyote");
 const Db = Coyote.Db;
-const Models = @import("./models/export.zig");
+pub const Models = @import("./models/export.zig"); //must be named Models
 
 pub fn main() !void {
     var coyote = try Coyote.init();
@@ -18,7 +18,7 @@ pub fn main() !void {
     try coyote.run();
 }
 
-pub const coyote_user = struct { 
+pub const coyote_user = struct { //must have coyote_ prefix
     const Self = @This();
 
     route: []const u8 = "/user",

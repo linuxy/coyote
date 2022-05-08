@@ -28,7 +28,6 @@ var allocator = std.heap.c_allocator;
 pub var db_engine: ?db.Engine(.postgres) = undefined;
 pub var db_conn: ?db.Connection = undefined;
 
-//separate this by view? namespace?
 pub export var jinja_env: ?*anyopaque = undefined;
 
 var act = std.os.Sigaction{
@@ -89,7 +88,7 @@ pub fn templates(self: *Coyote, directory: [*:0]const u8) !void {
     _ = self;
 }
 
-//Todo: render any type
+//Render templates with value dictionary, supports ?*value, *value, value
 pub fn render(path: [*:0] const u8, vars: anytype) []const u8 {
     var template = jinja.get_template(jinja_env, path);
     var vars_array: [@typeInfo(@TypeOf(vars)).Struct.fields.len * 2][*:0]const u8 = undefined;
@@ -99,23 +98,24 @@ pub fn render(path: [*:0] const u8, vars: anytype) []const u8 {
         log.info("member name: {s} value: {s} total: {}, idx: {}", .{member.name, @field(vars, member.name), @typeInfo(@TypeOf(vars)).Struct.fields.len, i});
         vars_array[i] = @ptrCast([*:0]const u8, member.name);
         
-        //Todo: ?*
-        //Dereference pointer
-        if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Pointer)
-            vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name))
-        else
+        if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Pointer) {
+            if(@typeInfo(@TypeOf(@field(vars, member.name).*)) == .Optional) {
+                vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name).*.?);
+                log.info("here: {s}", .{member.name});
+            } else if(@typeInfo(@TypeOf(@field(vars, member.name).*)) == .Pointer) {
+                vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name).*);
+            } else {
+                vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name));
+            }
+        } else if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Optional) {
+            vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name).?);
+        } else {
             vars_array[i + 1] = @ptrCast([*:0]const u8, &@field(vars, member.name));
-
-        //Dereference optional
-        if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Optional and (@field(vars, member.name) != null))
-            vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name).?)
-        else if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Optional)
-            _ = i
-        else
-            vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name));
+        }
 
         i += 2;
     }
+
     var rendered = jinja.render(@ptrCast(?*anyopaque, template), @as(c_int, @typeInfo(@TypeOf(vars)).Struct.fields.len * 2), @ptrCast([*c][*:0]const u8, &vars_array));
     var rendered_utf8 = std.mem.span(jinja.PyUnicode_AsUTF8(rendered));
 
@@ -127,7 +127,7 @@ pub fn response(req: [*c]http.iwn_wf_req, code: u32, mime: []const u8, body: []c
                                 body.len, @ptrCast([*:0]const u8, body), @ptrCast([*c]const u8, &user_data));
 }
 
-//Dynamically build these from loaded template directory
+//Dynamically build routes from loaded template directory
 pub fn routes(self: *Coyote) !void {
     var route: http.struct_iwn_wf_route = undefined;
     var route_pattern: ?[]const u8 = null;
@@ -170,6 +170,27 @@ pub fn routes(self: *Coyote) !void {
             route.ctx = http.ctx;
             route.user_data = @ptrCast(*anyopaque, &data);
             try ec(http.iwn_wf_route(@ptrCast([*c]http.struct_iwn_wf_route, &route), 0));
+        }
+    }
+    _ = self;
+}
+
+pub fn models(self: *Coyote) !void {
+    inline for (@typeInfo(@import("root")).Struct.decls) |decl| {
+        const found = comptime std.mem.eql(u8, decl.name, "Models");
+        if (decl.is_pub and comptime found) {
+            log.info("found Models", .{});
+            inline for (@typeInfo(@field(@import("root"), decl.name)).Struct.decls) |child| {
+                log.info("found Models child, {s}", .{child.name});
+                if(child.is_pub) {
+                    inline for (@typeInfo(@field(@field(@import("root"), decl.name), child.name)).Struct.decls) |sub| {
+                        log.info("found Sub child, {s}", .{sub.name});
+                        if(std.mem.eql(u8, sub.name, "Meta")) {
+                            //
+                        }
+                    }
+                }
+            }
         }
     }
     _ = self;
@@ -241,6 +262,7 @@ pub fn config(self: *Coyote, conf: anytype) !void {
 
     spec.poller = http.poller;
     try self.routes();
+    try self.models();
 }
 
 //Create IWN server and poll
@@ -260,14 +282,6 @@ pub fn deinit(self: *Coyote) void {
 
     log.info("deinit()", .{});
     _ = self;
-}
-
-//Build these with routes
-pub fn _handle_echo(req: [*c]http.iwn_wf_req, user_data: ?*anyopaque) callconv(.C) c_int {
-    //std.log.info("Echo handler called\n", .{});
-    _ = http.iwn_http_response_printf(req.*.http, 200, "text/plain", "%.*s\n",
-                                @intCast(c_int, req.*.body_len), req.*.body, @ptrCast([*c]const u8, &user_data));
-    return http.IWN_WF_RES_PROCESSED;
 }
 
 pub fn ec(err: u64) !void {
