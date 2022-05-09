@@ -29,8 +29,9 @@ pub var db_engine: ?db.Engine(.postgres) = undefined;
 pub var db_conn: ?db.Connection = undefined;
 
 //rework for async // one env per thread
-pub export var jinja_env: ?*anyopaque = undefined;
+var jinja_env: ?*anyopaque = undefined;
 var template_cache: std.AutoHashMap([*:0]const u8, ?*anyopaque) = undefined;
+var template_lock: std.Thread.Mutex = .{};
 
 var act = std.os.Sigaction{
     .handler = .{.sigaction = signalHandler },
@@ -140,9 +141,9 @@ pub fn render(path: [*:0]const u8, vars: anytype) []const u8 {
     return rendered_utf8;
 }
 
-pub fn response(req: [*c]http.iwn_wf_req, code: u32, mime: []const u8, body: []const u8, user_data: ?*anyopaque) !void {
+pub fn response(req: [*c]http.iwn_wf_req, code: u32, mime: []const u8, body: []const u8, body_len: ?usize, user_data: ?*anyopaque) !void {
     _ = http.iwn_http_response_printf(req.*.http, @intCast(c_int, code), @ptrCast([*c]const u8, mime), "%.*s\n",
-                                body.len, @ptrCast([*:0]const u8, body), @ptrCast([*c]const u8, &user_data));
+                                body_len.?, @ptrCast([*:0]const u8, body), @ptrCast([*c]const u8, &user_data));
 }
 
 //Dynamically build routes from loaded template directory

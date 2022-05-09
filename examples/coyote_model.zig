@@ -32,7 +32,7 @@ pub const coyote_user = struct { //must have coyote_ prefix
                         .email = try Coyote.formValue(req, "email")};
         try Db.save(user);
         var rendered = Coyote.render("user.html", .{.object = user.username, .status = "created successfully"});
-        try Coyote.response(req, 200, "text/plain", rendered, data);
+        try Coyote.response(req, 200, "text/plain", rendered, rendered.len, data);
         return Coyote.Processed;
     }
 };

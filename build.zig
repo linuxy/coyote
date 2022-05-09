@@ -25,7 +25,7 @@ pub fn build(b: *std.build.Builder) void {
 
     const iwnet = build_iwnet(b);
 
-    const exe = b.addExecutable("example-model", "examples/coyote_echo.zig");
+    const exe = b.addExecutable("example_echo", "examples/coyote_echo.zig");
     exe.setBuildMode(mode);
     exe.addPackage(pkgs.jinja);
     exe.addPackage(pkgs.iwnet);
