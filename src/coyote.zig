@@ -58,6 +58,7 @@ pub fn init() !Coyote {
 var global_fn: fn(req: Request, data: Data) u32 = undefined;
 
 //This removes the callconv requirement
+//TODO: Unpack and repack the Request struct w/ Zig types
 pub fn Handler(callback_fn: fn(req: Request, user_data: Data) u32) fn(req: Request, user_data: Data) callconv (.C) c_int {
     global_fn = callback_fn;
 
@@ -98,23 +99,28 @@ pub fn cacheTemplates(path: [*:0]const u8) !void {
     _ = path;
 }
 
+const Rendered = struct {
+    data: [*c]const u8,
+    len: usize,
+};
+
 //Render templates with value dictionary, supports ?*value, *value, ?value, value
-pub fn render(path: [*:0]const u8, vars: anytype) []const u8 {
+pub fn render(path: [*:0]const u8, vars: anytype) Rendered {
+    template_lock.lock(); //TODO: Fix
     var cache = template_cache.get(path);
     var template: ?*anyopaque = undefined;
     if(cache != null) {
         template = cache.?;
-        log.info("template: {s} cached.", .{path});
+        //log.info("template: {s} cached.", .{path});
     } else {
         template = jinja.get_template(jinja_env, path);
         template_cache.put(path, template) catch unreachable;
     }
-
     var vars_array: [@typeInfo(@TypeOf(vars)).Struct.fields.len * 2][*:0]const u8 = undefined;
 
     var i: usize = 0;
     inline for (std.meta.fields(@TypeOf(vars))) |member| {
-        log.info("member name: {s} value: {s} total: {}, idx: {}", .{member.name, @field(vars, member.name), @typeInfo(@TypeOf(vars)).Struct.fields.len, i});
+        //log.info("member name: {s} value: {s} total: {}, idx: {}", .{member.name, @field(vars, member.name), @typeInfo(@TypeOf(vars)).Struct.fields.len, i});
         vars_array[i] = @ptrCast([*:0]const u8, member.name);
         
         if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Pointer) {
@@ -137,13 +143,13 @@ pub fn render(path: [*:0]const u8, vars: anytype) []const u8 {
 
     var rendered = jinja.render(@ptrCast(?*anyopaque, template), @as(c_int, @typeInfo(@TypeOf(vars)).Struct.fields.len * 2), @ptrCast([*c][*:0]const u8, &vars_array));
     var rendered_utf8 = std.mem.span(jinja.PyUnicode_AsUTF8(rendered));
-
-    return rendered_utf8;
+    template_lock.unlock();
+    return .{.data = rendered_utf8, .len = rendered_utf8.len};
 }
 
-pub fn response(req: [*c]http.iwn_wf_req, code: u32, mime: []const u8, body: []const u8, body_len: ?usize, user_data: ?*anyopaque) !void {
+pub fn response(req: [*c]http.iwn_wf_req, code: u32, mime: []const u8, body: [*c]const u8, body_len: ?usize, user_data: ?*anyopaque) !void {
     _ = http.iwn_http_response_printf(req.*.http, @intCast(c_int, code), @ptrCast([*c]const u8, mime), "%.*s\n",
-                                body_len.?, @ptrCast([*:0]const u8, body), @ptrCast([*c]const u8, &user_data));
+                                body_len.?, body, @ptrCast([*c]const u8, &user_data));
 }
 
 //Dynamically build routes from loaded template directory
