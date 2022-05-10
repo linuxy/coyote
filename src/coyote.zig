@@ -24,14 +24,18 @@ pub const Db = @This();
 
 var spec: http.iwn_wf_server_spec = undefined;
 var data: ?*anyopaque = undefined;
-var allocator = std.heap.c_allocator;
+var general_purpose_allocator = std.heap.GeneralPurposeAllocator(.{}){};
+var allocator = general_purpose_allocator.allocator();
+//var allocator = std.heap.c_allocator;
 pub var db_engine: ?db.Engine(.postgres) = undefined;
 pub var db_conn: ?db.Connection = undefined;
 
 //rework for async // one env per thread
 var jinja_env: ?*anyopaque = undefined;
-var template_cache: std.AutoHashMap([*:0]const u8, ?*anyopaque) = undefined;
 var template_lock: std.Thread.Mutex = .{};
+pub var jinja_cache: *std.AutoHashMap(u64, ?*anyopaque) = undefined;
+var template_directory: [*:0]const u8 = undefined;
+var cache: ?*Cache = undefined;
 
 var act = std.os.Sigaction{
     .handler = .{.sigaction = signalHandler },
@@ -51,9 +55,23 @@ pub fn signalHandler(sig: i32, sig_info: *const std.os.siginfo_t, ctx_ptr: ?*con
 pub fn init() !Coyote {
     try ec(http.iw_init());
     try ec(http.iwn_wf_create(0, @ptrCast([*c][*c]http.struct_iwn_wf_ctx, &http.ctx)));
-    template_cache = std.AutoHashMap([*:0]const u8, ?*anyopaque).init(allocator);
+
+    cache = try allocator.create(Cache);
+    cache.?.* = Cache.init();
     return Coyote{};
 }
+
+const Cache = struct {
+    template: std.AutoHashMap([*:0]const u8, ?*anyopaque),
+    jinja: std.AutoHashMap(u64, ?*anyopaque),
+
+    pub fn init() Cache {
+        return Cache {
+            .jinja = std.AutoHashMap(u64, ?*anyopaque).init(allocator),
+            .template = std.AutoHashMap([*:0]const u8, ?*anyopaque).init(allocator),
+        };
+    }
+};
 
 var global_fn: fn(req: Request, data: Data) u32 = undefined;
 
@@ -90,7 +108,7 @@ pub fn save(model: anytype) !void {
 }
 
 pub fn templates(self: *Coyote, directory: [*:0]const u8) !void {
-    jinja_env = jinja.init_environment(directory);
+    template_directory = directory;
     try cacheTemplates(directory);
     _ = self;
 }
@@ -107,15 +125,22 @@ const Rendered = struct {
 //Render templates with value dictionary, supports ?*value, *value, ?value, value
 pub fn render(path: [*:0]const u8, vars: anytype) Rendered {
     template_lock.lock(); //TODO: Fix
-    var cache = template_cache.get(path);
+    var template_cache = cache.?.template.get(path);
     var template: ?*anyopaque = undefined;
-    if(cache != null) {
-        template = cache.?;
-        //log.info("template: {s} cached.", .{path});
-    } else {
-        template = jinja.get_template(jinja_env, path);
-        template_cache.put(path, template) catch unreachable;
+    var env_cache: ?*anyopaque = if(cache.?.jinja.get(std.Thread.getCurrentId()) == null) null else cache.?.jinja.get(std.Thread.getCurrentId()).?;
+
+    if(env_cache == null) {
+        env_cache = jinja.init_environment(template_directory);
+        cache.?.jinja.put(std.Thread.getCurrentId(), env_cache) catch unreachable;
     }
+
+    if(template_cache != null) {
+        template = template_cache.?;
+    } else {
+        template = jinja.get_template(env_cache, path);
+        cache.?.template.put(path, template) catch unreachable;
+    }
+
     var vars_array: [@typeInfo(@TypeOf(vars)).Struct.fields.len * 2][*:0]const u8 = undefined;
 
     var i: usize = 0;
@@ -144,6 +169,7 @@ pub fn render(path: [*:0]const u8, vars: anytype) Rendered {
     var rendered = jinja.render(@ptrCast(?*anyopaque, template), @as(c_int, @typeInfo(@TypeOf(vars)).Struct.fields.len * 2), @ptrCast([*c][*:0]const u8, &vars_array));
     var rendered_utf8 = std.mem.span(jinja.PyUnicode_AsUTF8(rendered));
     template_lock.unlock();
+
     return .{.data = rendered_utf8, .len = rendered_utf8.len};
 }
 
