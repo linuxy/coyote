@@ -24,9 +24,7 @@ pub const Db = @This();
 
 var spec: http.iwn_wf_server_spec = undefined;
 var data: ?*anyopaque = undefined;
-var general_purpose_allocator = std.heap.GeneralPurposeAllocator(.{}){};
-var allocator = general_purpose_allocator.allocator();
-//var allocator = std.heap.c_allocator;
+var allocator = std.heap.c_allocator;
 pub var db_engine: ?db.Engine(.postgres) = undefined;
 pub var db_conn: ?db.Connection = undefined;
 
@@ -60,7 +58,7 @@ pub fn init() !Coyote {
     cache.?.* = Cache.init();
     return Coyote{};
 }
-
+ 
 const Cache = struct {
     template: std.AutoHashMap([*:0]const u8, ?*anyopaque),
     jinja: std.AutoHashMap(u64, ?*anyopaque),
@@ -109,12 +107,7 @@ pub fn save(model: anytype) !void {
 
 pub fn templates(self: *Coyote, directory: [*:0]const u8) !void {
     template_directory = directory;
-    try cacheTemplates(directory);
     _ = self;
-}
-
-pub fn cacheTemplates(path: [*:0]const u8) !void {
-    _ = path;
 }
 
 const Rendered = struct {
@@ -137,6 +130,7 @@ pub fn render(path: [*:0]const u8, vars: anytype) Rendered {
     if(template_cache != null) {
         template = template_cache.?;
     } else {
+        jinja_env = jinja.init_environment(template_directory);
         template = jinja.get_template(env_cache, path);
         cache.?.template.put(path, template) catch unreachable;
     }
@@ -151,7 +145,6 @@ pub fn render(path: [*:0]const u8, vars: anytype) Rendered {
         if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Pointer) {
             if(@typeInfo(@TypeOf(@field(vars, member.name).*)) == .Optional) {
                 vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name).*.?);
-                log.info("here: {s}", .{member.name});
             } else if(@typeInfo(@TypeOf(@field(vars, member.name).*)) == .Pointer) {
                 vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name).*);
             } else {
@@ -170,6 +163,7 @@ pub fn render(path: [*:0]const u8, vars: anytype) Rendered {
     var rendered_utf8 = std.mem.span(jinja.PyUnicode_AsUTF8(rendered));
     template_lock.unlock();
 
+    jinja._Py_DECREF(rendered);
     return .{.data = rendered_utf8, .len = rendered_utf8.len};
 }
 
@@ -214,7 +208,6 @@ pub fn routes(self: *Coyote) !void {
 
             if(route_handler != undefined)
                 route.handler = route_handler;
-
             if(route_flags != 0)
                 route.flags = route_flags;
 
@@ -327,7 +320,10 @@ pub fn run(self: *Coyote) !void {
 
 //Destruct any allocations
 pub fn deinit(self: *Coyote) void {
-    jinja.free_environment(jinja_env);
+    var iter = cache.?.jinja.iterator();
+    while(iter.next()) |kv| {
+        jinja.free_environment(kv.value_ptr);
+    }
     if(db_engine != null)
         db_engine.?.deinit();
 
