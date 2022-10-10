@@ -47,6 +47,11 @@ pub const __builtin_inff = @import("std").zig.c_builtins.__builtin_inff;
 pub const __builtin_isnan = @import("std").zig.c_builtins.__builtin_isnan;
 pub const __builtin_isinf = @import("std").zig.c_builtins.__builtin_isinf;
 pub const __builtin_isinf_sign = @import("std").zig.c_builtins.__builtin_isinf_sign;
+pub const __has_builtin = @import("std").zig.c_builtins.__has_builtin;
+pub const __builtin_assume = @import("std").zig.c_builtins.__builtin_assume;
+pub const __builtin_unreachable = @import("std").zig.c_builtins.__builtin_unreachable;
+pub const __builtin_constant_p = @import("std").zig.c_builtins.__builtin_constant_p;
+pub const __builtin_mul_overflow = @import("std").zig.c_builtins.__builtin_mul_overflow;
 pub const HANDLE = c_int;
 pub const __u_char = u8;
 pub const __u_short = c_ushort;
@@ -92,7 +97,6 @@ pub const __id_t = c_uint;
 pub const __time_t = c_long;
 pub const __useconds_t = c_uint;
 pub const __suseconds_t = c_long;
-pub const __suseconds64_t = c_long;
 pub const __daddr_t = c_int;
 pub const __key_t = c_int;
 pub const __clockid_t = c_int;
@@ -275,11 +279,6 @@ pub const struct___pthread_cond_s = extern struct {
     __wrefs: c_uint,
     __g_signals: [2]c_uint,
 };
-pub const __tss_t = c_uint;
-pub const __thrd_t = c_ulong;
-pub const __once_flag = extern struct {
-    __data: c_int,
-};
 pub const pthread_t = c_ulong;
 pub const pthread_mutexattr_t = extern union {
     __size: [4]u8,
@@ -371,7 +370,7 @@ pub const union_sigval = extern union {
 };
 pub const __sigval_t = union_sigval;
 const struct_unnamed_6 = extern struct {
-    _function: ?fn (__sigval_t) callconv(.C) void,
+    _function: ?*const fn (__sigval_t) callconv(.C) void,
     _attribute: [*c]pthread_attr_t,
 };
 const union_unnamed_5 = extern union {
@@ -432,11 +431,6 @@ pub extern fn timer_gettime(__timerid: timer_t, __value: [*c]struct_itimerspec) 
 pub extern fn timer_getoverrun(__timerid: timer_t) c_int;
 pub extern fn timespec_get(__ts: [*c]struct_timespec, __base: c_int) c_int;
 pub const __jmp_buf = [8]c_long;
-pub const struct___jmp_buf_tag = extern struct {
-    __jmpbuf: __jmp_buf,
-    __mask_was_saved: c_int,
-    __saved_mask: __sigset_t,
-};
 pub const PTHREAD_CREATE_JOINABLE: c_int = 0;
 pub const PTHREAD_CREATE_DETACHED: c_int = 1;
 const enum_unnamed_7 = c_uint;
@@ -473,7 +467,7 @@ pub const PTHREAD_PROCESS_PRIVATE: c_int = 0;
 pub const PTHREAD_PROCESS_SHARED: c_int = 1;
 const enum_unnamed_14 = c_uint;
 pub const struct__pthread_cleanup_buffer = extern struct {
-    __routine: ?fn (?*anyopaque) callconv(.C) void,
+    __routine: ?*const fn (?*anyopaque) callconv(.C) void,
     __arg: ?*anyopaque,
     __canceltype: c_int,
     __prev: [*c]struct__pthread_cleanup_buffer,
@@ -484,16 +478,12 @@ const enum_unnamed_15 = c_uint;
 pub const PTHREAD_CANCEL_DEFERRED: c_int = 0;
 pub const PTHREAD_CANCEL_ASYNCHRONOUS: c_int = 1;
 const enum_unnamed_16 = c_uint;
-pub extern fn pthread_create(noalias __newthread: [*c]pthread_t, noalias __attr: [*c]const pthread_attr_t, __start_routine: ?fn (?*anyopaque) callconv(.C) ?*anyopaque, noalias __arg: ?*anyopaque) c_int;
+pub extern fn pthread_create(noalias __newthread: [*c]pthread_t, noalias __attr: [*c]const pthread_attr_t, __start_routine: ?*const fn (?*anyopaque) callconv(.C) ?*anyopaque, noalias __arg: ?*anyopaque) c_int;
 pub extern fn pthread_exit(__retval: ?*anyopaque) noreturn;
 pub extern fn pthread_join(__th: pthread_t, __thread_return: [*c]?*anyopaque) c_int;
 pub extern fn pthread_detach(__th: pthread_t) c_int;
 pub extern fn pthread_self() pthread_t;
-pub fn pthread_equal(arg___thread1: pthread_t, arg___thread2: pthread_t) callconv(.C) c_int {
-    var __thread1 = arg___thread1;
-    var __thread2 = arg___thread2;
-    return @boolToInt(__thread1 == __thread2);
-}
+pub extern fn pthread_equal(__thread1: pthread_t, __thread2: pthread_t) c_int;
 pub extern fn pthread_attr_init(__attr: [*c]pthread_attr_t) c_int;
 pub extern fn pthread_attr_destroy(__attr: [*c]pthread_attr_t) c_int;
 pub extern fn pthread_attr_getdetachstate(__attr: [*c]const pthread_attr_t, __detachstate: [*c]c_int) c_int;
@@ -517,21 +507,21 @@ pub extern fn pthread_attr_setstack(__attr: [*c]pthread_attr_t, __stackaddr: ?*a
 pub extern fn pthread_setschedparam(__target_thread: pthread_t, __policy: c_int, __param: [*c]const struct_sched_param) c_int;
 pub extern fn pthread_getschedparam(__target_thread: pthread_t, noalias __policy: [*c]c_int, noalias __param: [*c]struct_sched_param) c_int;
 pub extern fn pthread_setschedprio(__target_thread: pthread_t, __prio: c_int) c_int;
-pub extern fn pthread_once(__once_control: [*c]pthread_once_t, __init_routine: ?fn () callconv(.C) void) c_int;
+pub extern fn pthread_once(__once_control: [*c]pthread_once_t, __init_routine: ?*const fn () callconv(.C) void) c_int;
 pub extern fn pthread_setcancelstate(__state: c_int, __oldstate: [*c]c_int) c_int;
 pub extern fn pthread_setcanceltype(__type: c_int, __oldtype: [*c]c_int) c_int;
 pub extern fn pthread_cancel(__th: pthread_t) c_int;
 pub extern fn pthread_testcancel() void;
-pub const struct___cancel_jmp_buf_tag = extern struct {
+const struct_unnamed_17 = extern struct {
     __cancel_jmp_buf: __jmp_buf,
     __mask_was_saved: c_int,
 };
 pub const __pthread_unwind_buf_t = extern struct {
-    __cancel_jmp_buf: [1]struct___cancel_jmp_buf_tag,
+    __cancel_jmp_buf: [1]struct_unnamed_17,
     __pad: [4]?*anyopaque,
 };
 pub const struct___pthread_cleanup_frame = extern struct {
-    __cancel_routine: ?fn (?*anyopaque) callconv(.C) void,
+    __cancel_routine: ?*const fn (?*anyopaque) callconv(.C) void,
     __cancel_arg: ?*anyopaque,
     __do_it: c_int,
     __cancel_type: c_int,
@@ -539,7 +529,8 @@ pub const struct___pthread_cleanup_frame = extern struct {
 pub extern fn __pthread_register_cancel(__buf: [*c]__pthread_unwind_buf_t) void;
 pub extern fn __pthread_unregister_cancel(__buf: [*c]__pthread_unwind_buf_t) void;
 pub extern fn __pthread_unwind_next(__buf: [*c]__pthread_unwind_buf_t) noreturn;
-pub extern fn __sigsetjmp(__env: [*c]struct___jmp_buf_tag, __savemask: c_int) c_int;
+pub const struct___jmp_buf_tag = opaque {};
+pub extern fn __sigsetjmp(__env: ?*struct___jmp_buf_tag, __savemask: c_int) c_int;
 pub extern fn pthread_mutex_init(__mutex: [*c]pthread_mutex_t, __mutexattr: [*c]const pthread_mutexattr_t) c_int;
 pub extern fn pthread_mutex_destroy(__mutex: [*c]pthread_mutex_t) c_int;
 pub extern fn pthread_mutex_trylock(__mutex: [*c]pthread_mutex_t) c_int;
@@ -600,14 +591,14 @@ pub extern fn pthread_barrierattr_init(__attr: [*c]pthread_barrierattr_t) c_int;
 pub extern fn pthread_barrierattr_destroy(__attr: [*c]pthread_barrierattr_t) c_int;
 pub extern fn pthread_barrierattr_getpshared(noalias __attr: [*c]const pthread_barrierattr_t, noalias __pshared: [*c]c_int) c_int;
 pub extern fn pthread_barrierattr_setpshared(__attr: [*c]pthread_barrierattr_t, __pshared: c_int) c_int;
-pub extern fn pthread_key_create(__key: [*c]pthread_key_t, __destr_function: ?fn (?*anyopaque) callconv(.C) void) c_int;
+pub extern fn pthread_key_create(__key: [*c]pthread_key_t, __destr_function: ?*const fn (?*anyopaque) callconv(.C) void) c_int;
 pub extern fn pthread_key_delete(__key: pthread_key_t) c_int;
 pub extern fn pthread_getspecific(__key: pthread_key_t) ?*anyopaque;
 pub extern fn pthread_setspecific(__key: pthread_key_t, __pointer: ?*const anyopaque) c_int;
 pub extern fn pthread_getcpuclockid(__thread_id: pthread_t, __clock_id: [*c]__clockid_t) c_int;
-pub extern fn pthread_atfork(__prepare: ?fn () callconv(.C) void, __parent: ?fn () callconv(.C) void, __child: ?fn () callconv(.C) void) c_int;
+pub extern fn pthread_atfork(__prepare: ?*const fn () callconv(.C) void, __parent: ?*const fn () callconv(.C) void, __child: ?*const fn () callconv(.C) void) c_int;
 pub const EPOLL_CLOEXEC: c_int = 524288;
-const enum_unnamed_17 = c_uint;
+const enum_unnamed_18 = c_uint;
 pub const EPOLLIN: c_int = 1;
 pub const EPOLLPRI: c_int = 2;
 pub const EPOLLOUT: c_int = 4;
@@ -631,9 +622,9 @@ pub const union_epoll_data = extern union {
     u64: u64,
 };
 pub const epoll_data_t = union_epoll_data;
-pub const struct_epoll_event = packed struct {
-    events: u32,
-    data: epoll_data_t,
+pub const struct_epoll_event = extern struct {
+    events: u32 align(1),
+    data: epoll_data_t align(1),
 };
 pub extern fn epoll_create(__size: c_int) c_int;
 pub extern fn epoll_create1(__flags: c_int) c_int;
@@ -644,37 +635,50 @@ pub const struct_iwn_poller = opaque {};
 pub const struct_iwn_poller_task = extern struct {
     fd: c_int,
     user_data: ?*anyopaque,
-    on_ready: ?fn ([*c]const struct_iwn_poller_task, u32) callconv(.C) i64,
-    on_dispose: ?fn ([*c]const struct_iwn_poller_task) callconv(.C) void,
+    on_ready: ?*const fn ([*c]const struct_iwn_poller_task, u32) callconv(.C) i64,
+    on_dispose: ?*const fn ([*c]const struct_iwn_poller_task) callconv(.C) void,
     events: u32,
     events_mod: u32,
     timeout: c_long,
     poller: ?*struct_iwn_poller,
 };
-pub const iwn_poller_probe_fn = ?fn (?*struct_iwn_poller, ?*anyopaque, ?*anyopaque) callconv(.C) void;
+pub const struct_iwn_poller_spec = extern struct {
+    num_threads: c_int,
+    one_shot_events: c_int,
+    overflow_threads_factor: c_int,
+    queue_limit: c_int,
+    warn_on_overflow_thread_spawn: bool,
+};
+pub const iwn_poller_probe_fn = ?*const fn (?*struct_iwn_poller, ?*anyopaque, ?*anyopaque) callconv(.C) void;
+pub extern fn iwn_poller_create_by_spec(spec: [*c]const struct_iwn_poller_spec, out_spec: [*c]?*struct_iwn_poller) iwrc;
 pub extern fn iwn_poller_create(num_threads: c_int, one_shot_events: c_int, out_poller: [*c]?*struct_iwn_poller) iwrc;
 pub extern fn iwn_poller_add(task: [*c]const struct_iwn_poller_task) iwrc;
+pub extern fn iwn_poller_add2(task: [*c]const struct_iwn_poller_task, out_fd: [*c]c_int) iwrc;
+pub extern fn iwn_poller_fd_is_managed(?*struct_iwn_poller, fd: c_int) bool;
+pub extern fn iwn_poller_fd_ref(?*struct_iwn_poller, fd: c_int, refs: c_int) bool;
 pub extern fn iwn_poller_arm_events(?*struct_iwn_poller, fd: c_int, events: u32) iwrc;
 pub extern fn iwn_poller_set_timeout(?*struct_iwn_poller, fd: c_int, timeout_sec: c_long) void;
 pub extern fn iwn_poller_remove(?*struct_iwn_poller, fd: c_int) void;
 pub extern fn iwn_poller_poke(?*struct_iwn_poller) void;
 pub extern fn iwn_poller_shutdown_request(?*struct_iwn_poller) void;
 pub extern fn iwn_poller_destroy(pp: [*c]?*struct_iwn_poller) void;
-pub extern fn iwn_poller_task(?*struct_iwn_poller, task: ?fn (?*anyopaque) callconv(.C) void, arg: ?*anyopaque) iwrc;
+pub extern fn iwn_poller_task(?*struct_iwn_poller, task: ?*const fn (?*anyopaque) callconv(.C) void, arg: ?*anyopaque) iwrc;
+pub extern fn iwn_poller_flags_set(?*struct_iwn_poller, flags: u32) void;
 pub extern fn iwn_poller_poll(?*struct_iwn_poller) void;
-pub extern fn iwn_poller_poll_in_thread(?*struct_iwn_poller, out_thr: [*c]pthread_t) iwrc;
+pub extern fn iwn_poller_poll_in_thread(?*struct_iwn_poller, thr_name: [*c]const u8, out_thr: [*c]pthread_t) iwrc;
 pub extern fn iwn_poller_alive(?*struct_iwn_poller) bool;
 pub extern fn iwn_poller_probe(?*struct_iwn_poller, fd: c_int, probe: iwn_poller_probe_fn, fn_user_data: ?*anyopaque) bool;
 pub const struct_iwn_poller_adapter = extern struct {
     poller: ?*struct_iwn_poller,
-    read: ?fn ([*c]struct_iwn_poller_adapter, [*c]u8, usize) callconv(.C) isize,
-    write: ?fn ([*c]struct_iwn_poller_adapter, [*c]const u8, usize) callconv(.C) isize,
-    arm: ?fn ([*c]struct_iwn_poller_adapter, u32) callconv(.C) iwrc,
-    has_pending_write_bytes: ?fn ([*c]struct_iwn_poller_adapter) callconv(.C) bool,
+    read: ?*const fn ([*c]struct_iwn_poller_adapter, [*c]u8, usize) callconv(.C) isize,
+    write: ?*const fn ([*c]struct_iwn_poller_adapter, [*c]const u8, usize) callconv(.C) isize,
+    arm: ?*const fn ([*c]struct_iwn_poller_adapter, u32) callconv(.C) iwrc,
+    has_pending_write_bytes: ?*const fn ([*c]struct_iwn_poller_adapter) callconv(.C) bool,
+    user_data: ?*anyopaque,
     fd: c_int,
 };
-pub const iwn_on_poller_adapter_event = ?fn ([*c]struct_iwn_poller_adapter, ?*anyopaque, u32) callconv(.C) i64;
-pub const iwn_on_poller_adapter_dispose = ?fn ([*c]struct_iwn_poller_adapter, ?*anyopaque) callconv(.C) void;
+pub const iwn_on_poller_adapter_event = ?*const fn ([*c]struct_iwn_poller_adapter, ?*anyopaque, u32) callconv(.C) i64;
+pub const iwn_on_poller_adapter_dispose = ?*const fn ([*c]struct_iwn_poller_adapter, ?*anyopaque) callconv(.C) void;
 pub const struct__IWPOOL = opaque {};
 pub const IWPOOL = struct__IWPOOL;
 pub extern fn iwpool_create(siz: usize) ?*IWPOOL;
@@ -690,7 +694,7 @@ pub extern fn iwpool_split_string(pool: ?*IWPOOL, haystack: [*c]const u8, split_
 pub extern fn iwpool_printf_split(pool: ?*IWPOOL, split_chars: [*c]const u8, ignore_whitespace: bool, format: [*c]const u8, ...) [*c][*c]const u8;
 pub extern fn iwpool_destroy(pool: ?*IWPOOL) void;
 pub extern fn iwpool_free_fn(pool: ?*anyopaque) void;
-pub extern fn iwpool_user_data_set(pool: ?*IWPOOL, data: ?*anyopaque, free_fn: ?fn (?*anyopaque) callconv(.C) void) void;
+pub extern fn iwpool_user_data_set(pool: ?*IWPOOL, data: ?*anyopaque, free_fn: ?*const fn (?*anyopaque) callconv(.C) void) void;
 pub extern fn iwpool_user_data_get(pool: ?*IWPOOL) ?*anyopaque;
 pub extern fn iwpool_user_data_detach(pool: ?*IWPOOL) ?*anyopaque;
 pub extern fn iwpool_allocated_size(pool: ?*IWPOOL) usize;
@@ -719,31 +723,12 @@ pub const struct_iwn_vals = extern struct {
 pub extern fn iwn_val_buf_free(val: [*c]struct_iwn_val) void;
 pub extern fn iwn_val_add(vals: [*c]struct_iwn_vals, v: [*c]struct_iwn_val) void;
 pub extern fn iwn_val_add_new(vals: [*c]struct_iwn_vals, buf: [*c]u8, len: usize) iwrc;
+pub extern fn iwn_vals_to_array(pool: ?*IWPOOL, vals: [*c]const struct_iwn_vals, out_size: [*c]usize) [*c][*c]struct_iwn_val;
 pub extern fn iwn_pair_add(pairs: [*c]struct_iwn_pairs, p: [*c]struct_iwn_pair) void;
+pub extern fn iwn_pairs_to_array(pool: ?*IWPOOL, pairs: [*c]const struct_iwn_pairs, out_size: [*c]usize) [*c][*c]struct_iwn_pair;
 pub extern fn iwn_pair_find(pairs: [*c]struct_iwn_pairs, key: [*c]const u8, key_len: isize) [*c]struct_iwn_pair;
 pub extern fn iwn_pair_find_val(pairs: [*c]struct_iwn_pairs, key: [*c]const u8, key_len: isize) struct_iwn_val;
 pub extern fn iwn_pair_add_pool(pool: ?*IWPOOL, pairs: [*c]struct_iwn_pairs, key: [*c]const u8, key_len: isize, val: [*c]u8, val_len: isize) iwrc;
-pub const struct__IWXSTR = opaque {};
-pub const IWXSTR = struct__IWXSTR;
-pub extern fn iwxstr_new() ?*IWXSTR;
-pub extern fn iwxstr_new2(siz: usize) ?*IWXSTR;
-pub extern fn iwxstr_wrap(buf: [*c]const u8, size: usize) ?*IWXSTR;
-pub extern fn iwxstr_destroy(xstr: ?*IWXSTR) void;
-pub extern fn iwxstr_destroy_keep_ptr(xstr: ?*IWXSTR) void;
-pub extern fn iwxstr_cat(xstr: ?*IWXSTR, buf: ?*const anyopaque, size: usize) iwrc;
-pub extern fn iwxstr_cat2(xstr: ?*IWXSTR, buf: [*c]const u8) iwrc;
-pub extern fn iwxstr_unshift(xstr: ?*IWXSTR, buf: ?*const anyopaque, size: usize) iwrc;
-pub extern fn iwxstr_printf(xstr: ?*IWXSTR, format: [*c]const u8, ...) iwrc;
-pub extern fn iwxstr_shift(xstr: ?*IWXSTR, shift_size: usize) void;
-pub extern fn iwxstr_pop(xstr: ?*IWXSTR, pop_size: usize) void;
-pub extern fn iwxstr_ptr(xstr: ?*IWXSTR) [*c]u8;
-pub extern fn iwxstr_set_size(xstr: ?*IWXSTR, size: usize) iwrc;
-pub extern fn iwxstr_size(xstr: ?*IWXSTR) usize;
-pub extern fn iwxstr_asize(xstr: ?*IWXSTR) usize;
-pub extern fn iwxstr_user_data_set(xstr: ?*IWXSTR, data: ?*anyopaque, free_fn: ?fn (?*anyopaque) callconv(.C) void) void;
-pub extern fn iwxstr_user_data_get(xstr: ?*IWXSTR) ?*anyopaque;
-pub extern fn iwxstr_user_data_detach(xstr: ?*IWXSTR) ?*anyopaque;
-pub extern fn iwxstr_clear(xstr: ?*IWXSTR) void;
 pub const struct___va_list_tag = extern struct {
     gp_offset: c_uint,
     fp_offset: c_uint,
@@ -753,102 +738,45 @@ pub const struct___va_list_tag = extern struct {
 pub const __builtin_va_list = [1]struct___va_list_tag;
 pub const va_list = __builtin_va_list;
 pub const __gnuc_va_list = __builtin_va_list;
-pub const struct_iwn_http_server = extern struct {
-    listen: [*c]const u8,
-    user_data: ?*anyopaque,
-    fd: c_int,
-    port: c_int,
-};
-pub const struct_iwn_http_req = extern struct {
-    user_data: ?*anyopaque,
-    user_id: i64,
-    user_mtx: pthread_mutex_t,
-    user_flags: u64,
-    server_user_data: ?*anyopaque,
-    session_cookie_params: [*c]const u8,
-    on_request_dispose: ?fn ([*c]struct_iwn_http_req) callconv(.C) void,
-    on_response_headers_write: ?fn ([*c]struct_iwn_http_req) callconv(.C) void,
-    on_response_completed: ?fn ([*c]struct_iwn_http_req) callconv(.C) bool,
-    poller_adapter: [*c]struct_iwn_poller_adapter,
-    session_cookie_max_age_sec: c_int,
-};
-pub const iwn_http_server_on_dispose = ?fn ([*c]const struct_iwn_http_server) callconv(.C) void;
-pub const iwn_http_server_request_handler = ?fn ([*c]struct_iwn_http_req) callconv(.C) bool;
-pub const iwn_http_server_chunk_handler = ?fn ([*c]struct_iwn_http_req, [*c]bool) callconv(.C) bool;
-pub const struct_iwn_http_server_ssl_spec = extern struct {
-    certs: [*c]const u8,
-    private_key: [*c]const u8,
-    certs_len: isize,
-    private_key_len: isize,
-    private_key_in_buffer: bool,
-    certs_in_buffer: bool,
-};
-pub const struct_iwn_http_server_spec = extern struct {
-    request_handler: iwn_http_server_request_handler,
-    poller: ?*struct_iwn_poller,
-    listen: [*c]const u8,
-    user_data: ?*anyopaque,
-    on_server_dispose: iwn_http_server_on_dispose,
-    ssl: struct_iwn_http_server_ssl_spec,
-    port: c_int,
-    socket_queue_size: c_int,
-    request_buf_max_size: c_int,
-    request_buf_size: c_int,
-    request_timeout_keepalive_sec: c_int,
-    request_timeout_sec: c_int,
-    request_token_max_len: c_int,
-    request_max_headers_count: c_int,
-};
-pub extern fn iwn_http_server_create([*c]const struct_iwn_http_server_spec, out_fd: [*c]c_int) iwrc;
-pub extern fn iwn_http_server_ssl_set(poller: ?*struct_iwn_poller, server_fd: c_int, ssl: [*c]const struct_iwn_http_server_ssl_spec) bool;
-pub extern fn iwn_http_request_chunk_next([*c]struct_iwn_http_req, iwn_http_server_chunk_handler) void;
-pub extern fn iwn_http_request_chunk_get([*c]struct_iwn_http_req) struct_iwn_val;
-pub extern fn iwn_http_request_is_streamed([*c]struct_iwn_http_req) bool;
-pub extern fn iwn_http_request_is_secure([*c]struct_iwn_http_req) bool;
-pub extern fn iwn_http_request_remote_ip([*c]struct_iwn_http_req) [*c]const u8;
-pub extern fn iwn_http_request_target([*c]struct_iwn_http_req) struct_iwn_val;
-pub extern fn iwn_http_request_target_is([*c]struct_iwn_http_req, target: [*c]const u8, target_len: isize) bool;
-pub extern fn iwn_http_request_method([*c]struct_iwn_http_req) struct_iwn_val;
-pub extern fn iwn_http_request_body([*c]struct_iwn_http_req) struct_iwn_val;
-pub extern fn iwn_http_request_header_get([*c]struct_iwn_http_req, header_name: [*c]const u8, header_name_len: isize) struct_iwn_val;
-pub extern fn iwn_http_request_headers_iterate([*c]struct_iwn_http_req, key: [*c]struct_iwn_val, val: [*c]struct_iwn_val, iter: [*c]c_int) bool;
-pub extern fn iwn_http_connection_set_automatic(request: [*c]struct_iwn_http_req) void;
-pub extern fn iwn_http_connection_set_keep_alive([*c]struct_iwn_http_req, keep_alive: bool) void;
-pub extern fn iwn_http_connection_set_upgrade([*c]struct_iwn_http_req) void;
-pub extern fn iwn_http_connection_is_upgrade([*c]struct_iwn_http_req) bool;
-pub extern fn iwn_http_response_code_set([*c]struct_iwn_http_req, code: c_int) iwrc;
-pub extern fn iwn_http_response_code_get([*c]struct_iwn_http_req) c_int;
-pub extern fn iwn_http_response_header_set([*c]struct_iwn_http_req, header_name: [*c]const u8, header_value: [*c]const u8, header_value_len: isize) iwrc;
-pub extern fn iwn_http_response_header_i64_set([*c]struct_iwn_http_req, header_name: [*c]const u8, header_value: i64) iwrc;
-pub extern fn iwn_http_response_header_printf_va(req: [*c]struct_iwn_http_req, header_name: [*c]const u8, format: [*c]const u8, va: [*c]struct___va_list_tag) iwrc;
-pub extern fn iwn_http_response_header_printf(req: [*c]struct_iwn_http_req, header_name: [*c]const u8, format: [*c]const u8, ...) iwrc;
-pub extern fn iwn_http_response_header_add([*c]struct_iwn_http_req, header_name: [*c]const u8, header_value: [*c]const u8, header_value_len: isize) iwrc;
-pub extern fn iwn_http_response_header_get([*c]struct_iwn_http_req, header_name: [*c]const u8) struct_iwn_val;
-pub extern fn iwn_http_response_body_clear([*c]struct_iwn_http_req) void;
-pub extern fn iwn_http_response_body_set([*c]struct_iwn_http_req, body: [*c]const u8, body_len: isize, body_free: ?fn (?*anyopaque) callconv(.C) void) void;
-pub extern fn iwn_http_response_end([*c]struct_iwn_http_req) iwrc;
-pub extern fn iwn_http_response_by_code([*c]struct_iwn_http_req, code: c_int) bool;
-pub extern fn iwn_http_response_write([*c]struct_iwn_http_req, status_code: c_int, content_type: [*c]const u8, body: [*c]const u8, body_len: isize) bool;
-pub extern fn iwn_http_response_printf([*c]struct_iwn_http_req, status_code: c_int, content_type: [*c]const u8, body_fmt: [*c]const u8, ...) bool;
-pub extern fn iwn_http_response_printf_va([*c]struct_iwn_http_req, status_code: c_int, content_type: [*c]const u8, body_fmt: [*c]const u8, va: [*c]struct___va_list_tag) bool;
-pub extern fn iwn_http_response_chunk_write([*c]struct_iwn_http_req, body: [*c]u8, body_len: isize, chunk_cb: iwn_http_server_chunk_handler, again: [*c]bool) iwrc;
-pub extern fn iwn_http_response_chunk_end([*c]struct_iwn_http_req) iwrc;
-pub extern fn iwn_http_response_stream_start([*c]struct_iwn_http_req, chunk_cb: iwn_http_server_chunk_handler) iwrc;
-pub extern fn iwn_http_response_stream_write([*c]struct_iwn_http_req, buf: [*c]u8, buf_len: isize, buf_free: ?fn (?*anyopaque) callconv(.C) void, chunk_cb: iwn_http_server_chunk_handler, again: [*c]bool) void;
-pub extern fn iwn_http_response_stream_end([*c]struct_iwn_http_req) void;
-pub extern fn iwn_http_inject_poller_events_handler([*c]struct_iwn_http_req, eh: iwn_on_poller_adapter_event) void;
+pub const struct__IWXSTR = opaque {};
+pub const IWXSTR = struct__IWXSTR;
+pub extern fn iwxstr_new() ?*IWXSTR;
+pub extern fn iwxstr_new2(siz: usize) ?*IWXSTR;
+pub extern fn iwxstr_new_printf(format: [*c]const u8, ...) ?*IWXSTR;
+pub extern fn iwxstr_new_clone(xstr: ?*const IWXSTR) ?*IWXSTR;
+pub extern fn iwxstr_wrap(buf: [*c]u8, size: usize, asize: usize) ?*IWXSTR;
+pub extern fn iwxstr_destroy(xstr: ?*IWXSTR) void;
+pub extern fn iwxstr_destroy_keep_ptr(xstr: ?*IWXSTR) [*c]u8;
+pub extern fn iwxstr_cat(xstr: ?*IWXSTR, buf: ?*const anyopaque, size: usize) iwrc;
+pub extern fn iwxstr_cat2(xstr: ?*IWXSTR, buf: [*c]const u8) iwrc;
+pub extern fn iwxstr_unshift(xstr: ?*IWXSTR, buf: ?*const anyopaque, size: usize) iwrc;
+pub extern fn iwxstr_vaprintf(xstr: ?*IWXSTR, format: [*c]const u8, va: [*c]struct___va_list_tag) iwrc;
+pub extern fn iwxstr_printf(xstr: ?*IWXSTR, format: [*c]const u8, ...) iwrc;
+pub extern fn iwxstr_shift(xstr: ?*IWXSTR, shift_size: usize) void;
+pub extern fn iwxstr_pop(xstr: ?*IWXSTR, pop_size: usize) void;
+pub extern fn iwxstr_insert(xstr: ?*IWXSTR, pos: usize, buf: ?*const anyopaque, size: usize) iwrc;
+pub extern fn iwxstr_insert_vaprintf(xstr: ?*IWXSTR, pos: usize, format: [*c]const u8, va: [*c]struct___va_list_tag) iwrc;
+pub extern fn iwxstr_insert_printf(xstr: ?*IWXSTR, pos: usize, format: [*c]const u8, ...) iwrc;
+pub extern fn iwxstr_ptr(xstr: ?*IWXSTR) [*c]u8;
+pub extern fn iwxstr_set_size(xstr: ?*IWXSTR, size: usize) iwrc;
+pub extern fn iwxstr_size(xstr: ?*IWXSTR) usize;
+pub extern fn iwxstr_asize(xstr: ?*IWXSTR) usize;
+pub extern fn iwxstr_user_data_set(xstr: ?*IWXSTR, data: ?*anyopaque, free_fn: ?*const fn (?*anyopaque) callconv(.C) void) void;
+pub extern fn iwxstr_user_data_get(xstr: ?*IWXSTR) ?*anyopaque;
+pub extern fn iwxstr_user_data_detach(xstr: ?*IWXSTR) ?*anyopaque;
+pub extern fn iwxstr_clear(xstr: ?*IWXSTR) void;
 pub extern fn iw_init() iwrc;
 pub extern fn iowow_version_full() [*c]const u8;
 pub extern fn iowow_version_major() c_uint;
 pub extern fn iowow_version_minor() c_uint;
 pub extern fn iowow_version_patch() c_uint;
-const union_unnamed_18 = extern union {
+const union_unnamed_19 = extern union {
     __wch: c_uint,
     __wchb: [4]u8,
 };
 pub const __mbstate_t = extern struct {
     __count: c_int,
-    __value: union_unnamed_18,
+    __value: union_unnamed_19,
 };
 pub const struct__G_fpos_t = extern struct {
     __pos: __off_t,
@@ -904,11 +832,11 @@ pub extern var stderr: [*c]FILE;
 pub extern fn remove(__filename: [*c]const u8) c_int;
 pub extern fn rename(__old: [*c]const u8, __new: [*c]const u8) c_int;
 pub extern fn renameat(__oldfd: c_int, __old: [*c]const u8, __newfd: c_int, __new: [*c]const u8) c_int;
-pub extern fn fclose(__stream: [*c]FILE) c_int;
 pub extern fn tmpfile() [*c]FILE;
-pub extern fn tmpnam([*c]u8) [*c]u8;
+pub extern fn tmpnam(__s: [*c]u8) [*c]u8;
 pub extern fn tmpnam_r(__s: [*c]u8) [*c]u8;
 pub extern fn tempnam(__dir: [*c]const u8, __pfx: [*c]const u8) [*c]u8;
+pub extern fn fclose(__stream: [*c]FILE) c_int;
 pub extern fn fflush(__stream: [*c]FILE) c_int;
 pub extern fn fflush_unlocked(__stream: [*c]FILE) c_int;
 pub extern fn fopen(__filename: [*c]const u8, __modes: [*c]const u8) [*c]FILE;
@@ -924,11 +852,7 @@ pub extern fn fprintf(__stream: [*c]FILE, __format: [*c]const u8, ...) c_int;
 pub extern fn printf(__format: [*c]const u8, ...) c_int;
 pub extern fn sprintf(__s: [*c]u8, __format: [*c]const u8, ...) c_int;
 pub extern fn vfprintf(__s: [*c]FILE, __format: [*c]const u8, __arg: [*c]struct___va_list_tag) c_int;
-pub fn vprintf(arg___fmt: [*c]const u8, arg___arg: [*c]struct___va_list_tag) callconv(.C) c_int {
-    var __fmt = arg___fmt;
-    var __arg = arg___arg;
-    return vfprintf(stdout, __fmt, __arg);
-}
+pub extern fn vprintf(__format: [*c]const u8, __arg: [*c]struct___va_list_tag) c_int;
 pub extern fn vsprintf(__s: [*c]u8, __format: [*c]const u8, __arg: [*c]struct___va_list_tag) c_int;
 pub extern fn snprintf(__s: [*c]u8, __maxlen: c_ulong, __format: [*c]const u8, ...) c_int;
 pub extern fn vsnprintf(__s: [*c]u8, __maxlen: c_ulong, __format: [*c]const u8, __arg: [*c]struct___va_list_tag) c_int;
@@ -937,91 +861,21 @@ pub extern fn dprintf(__fd: c_int, noalias __fmt: [*c]const u8, ...) c_int;
 pub extern fn fscanf(noalias __stream: [*c]FILE, noalias __format: [*c]const u8, ...) c_int;
 pub extern fn scanf(noalias __format: [*c]const u8, ...) c_int;
 pub extern fn sscanf(noalias __s: [*c]const u8, noalias __format: [*c]const u8, ...) c_int;
-pub const _Float32 = f32;
-pub const _Float64 = f64;
-pub const _Float32x = f64;
-pub const _Float64x = c_longdouble;
 pub extern fn vfscanf(noalias __s: [*c]FILE, noalias __format: [*c]const u8, __arg: [*c]struct___va_list_tag) c_int;
 pub extern fn vscanf(noalias __format: [*c]const u8, __arg: [*c]struct___va_list_tag) c_int;
 pub extern fn vsscanf(noalias __s: [*c]const u8, noalias __format: [*c]const u8, __arg: [*c]struct___va_list_tag) c_int;
 pub extern fn fgetc(__stream: [*c]FILE) c_int;
 pub extern fn getc(__stream: [*c]FILE) c_int;
-pub fn getchar() callconv(.C) c_int {
-    return getc(stdin);
-}
-pub fn getc_unlocked(arg___fp: [*c]FILE) callconv(.C) c_int {
-    var __fp = arg___fp;
-    return if (__builtin_expect(@bitCast(c_long, @as(c_long, @boolToInt(__fp.*._IO_read_ptr >= __fp.*._IO_read_end))), @bitCast(c_long, @as(c_long, @as(c_int, 0)))) != 0) __uflow(__fp) else @bitCast(c_int, @as(c_uint, @ptrCast([*c]u8, @alignCast(@import("std").meta.alignment(u8), blk: {
-        const ref = &__fp.*._IO_read_ptr;
-        const tmp = ref.*;
-        ref.* += 1;
-        break :blk tmp;
-    })).*));
-}
-pub fn getchar_unlocked() callconv(.C) c_int {
-    return if (__builtin_expect(@bitCast(c_long, @as(c_long, @boolToInt(stdin.*._IO_read_ptr >= stdin.*._IO_read_end))), @bitCast(c_long, @as(c_long, @as(c_int, 0)))) != 0) __uflow(stdin) else @bitCast(c_int, @as(c_uint, @ptrCast([*c]u8, @alignCast(@import("std").meta.alignment(u8), blk: {
-        const ref = &stdin.*._IO_read_ptr;
-        const tmp = ref.*;
-        ref.* += 1;
-        break :blk tmp;
-    })).*));
-}
-pub fn fgetc_unlocked(arg___fp: [*c]FILE) callconv(.C) c_int {
-    var __fp = arg___fp;
-    return if (__builtin_expect(@bitCast(c_long, @as(c_long, @boolToInt(__fp.*._IO_read_ptr >= __fp.*._IO_read_end))), @bitCast(c_long, @as(c_long, @as(c_int, 0)))) != 0) __uflow(__fp) else @bitCast(c_int, @as(c_uint, @ptrCast([*c]u8, @alignCast(@import("std").meta.alignment(u8), blk: {
-        const ref = &__fp.*._IO_read_ptr;
-        const tmp = ref.*;
-        ref.* += 1;
-        break :blk tmp;
-    })).*));
-}
+pub extern fn getchar() c_int;
+pub extern fn getc_unlocked(__stream: [*c]FILE) c_int;
+pub extern fn getchar_unlocked() c_int;
+pub extern fn fgetc_unlocked(__stream: [*c]FILE) c_int;
 pub extern fn fputc(__c: c_int, __stream: [*c]FILE) c_int;
 pub extern fn putc(__c: c_int, __stream: [*c]FILE) c_int;
-pub fn putchar(arg___c: c_int) callconv(.C) c_int {
-    var __c = arg___c;
-    return putc(__c, stdout);
-}
-pub fn fputc_unlocked(arg___c: c_int, arg___stream: [*c]FILE) callconv(.C) c_int {
-    var __c = arg___c;
-    var __stream = arg___stream;
-    return if (__builtin_expect(@bitCast(c_long, @as(c_long, @boolToInt(__stream.*._IO_write_ptr >= __stream.*._IO_write_end))), @bitCast(c_long, @as(c_long, @as(c_int, 0)))) != 0) __overflow(__stream, @bitCast(c_int, @as(c_uint, @bitCast(u8, @truncate(i8, __c))))) else @bitCast(c_int, @as(c_uint, @bitCast(u8, blk: {
-        const tmp = @bitCast(u8, @truncate(i8, __c));
-        (blk_1: {
-            const ref = &__stream.*._IO_write_ptr;
-            const tmp_2 = ref.*;
-            ref.* += 1;
-            break :blk_1 tmp_2;
-        }).* = tmp;
-        break :blk tmp;
-    })));
-}
-pub fn putc_unlocked(arg___c: c_int, arg___stream: [*c]FILE) callconv(.C) c_int {
-    var __c = arg___c;
-    var __stream = arg___stream;
-    return if (__builtin_expect(@bitCast(c_long, @as(c_long, @boolToInt(__stream.*._IO_write_ptr >= __stream.*._IO_write_end))), @bitCast(c_long, @as(c_long, @as(c_int, 0)))) != 0) __overflow(__stream, @bitCast(c_int, @as(c_uint, @bitCast(u8, @truncate(i8, __c))))) else @bitCast(c_int, @as(c_uint, @bitCast(u8, blk: {
-        const tmp = @bitCast(u8, @truncate(i8, __c));
-        (blk_1: {
-            const ref = &__stream.*._IO_write_ptr;
-            const tmp_2 = ref.*;
-            ref.* += 1;
-            break :blk_1 tmp_2;
-        }).* = tmp;
-        break :blk tmp;
-    })));
-}
-pub fn putchar_unlocked(arg___c: c_int) callconv(.C) c_int {
-    var __c = arg___c;
-    return if (__builtin_expect(@bitCast(c_long, @as(c_long, @boolToInt(stdout.*._IO_write_ptr >= stdout.*._IO_write_end))), @bitCast(c_long, @as(c_long, @as(c_int, 0)))) != 0) __overflow(stdout, @bitCast(c_int, @as(c_uint, @bitCast(u8, @truncate(i8, __c))))) else @bitCast(c_int, @as(c_uint, @bitCast(u8, blk: {
-        const tmp = @bitCast(u8, @truncate(i8, __c));
-        (blk_1: {
-            const ref = &stdout.*._IO_write_ptr;
-            const tmp_2 = ref.*;
-            ref.* += 1;
-            break :blk_1 tmp_2;
-        }).* = tmp;
-        break :blk tmp;
-    })));
-}
+pub extern fn putchar(__c: c_int) c_int;
+pub extern fn fputc_unlocked(__c: c_int, __stream: [*c]FILE) c_int;
+pub extern fn putc_unlocked(__c: c_int, __stream: [*c]FILE) c_int;
+pub extern fn putchar_unlocked(__c: c_int) c_int;
 pub extern fn getw(__stream: [*c]FILE) c_int;
 pub extern fn putw(__w: c_int, __stream: [*c]FILE) c_int;
 pub extern fn fgets(noalias __s: [*c]u8, __n: c_int, noalias __stream: [*c]FILE) [*c]u8;
@@ -1046,19 +900,15 @@ pub extern fn clearerr(__stream: [*c]FILE) void;
 pub extern fn feof(__stream: [*c]FILE) c_int;
 pub extern fn ferror(__stream: [*c]FILE) c_int;
 pub extern fn clearerr_unlocked(__stream: [*c]FILE) void;
-pub fn feof_unlocked(arg___stream: [*c]FILE) callconv(.C) c_int {
-    var __stream = arg___stream;
-    return @boolToInt((__stream.*._flags & @as(c_int, 16)) != @as(c_int, 0));
-}
-pub fn ferror_unlocked(arg___stream: [*c]FILE) callconv(.C) c_int {
-    var __stream = arg___stream;
-    return @boolToInt((__stream.*._flags & @as(c_int, 32)) != @as(c_int, 0));
-}
+pub extern fn feof_unlocked(__stream: [*c]FILE) c_int;
+pub extern fn ferror_unlocked(__stream: [*c]FILE) c_int;
 pub extern fn perror(__s: [*c]const u8) void;
+pub extern var sys_nerr: c_int;
+pub extern const sys_errlist: [*c]const [*c]const u8;
 pub extern fn fileno(__stream: [*c]FILE) c_int;
 pub extern fn fileno_unlocked(__stream: [*c]FILE) c_int;
-pub extern fn pclose(__stream: [*c]FILE) c_int;
 pub extern fn popen(__command: [*c]const u8, __modes: [*c]const u8) [*c]FILE;
+pub extern fn pclose(__stream: [*c]FILE) c_int;
 pub extern fn ctermid(__s: [*c]u8) [*c]u8;
 pub extern fn flockfile(__stream: [*c]FILE) void;
 pub extern fn ftrylockfile(__stream: [*c]FILE) c_int;
@@ -1121,17 +971,22 @@ pub const IW_ERROR_INVALID_VALUE: c_int = 70019;
 pub const IW_ERROR_UNEXPECTED_RESPONSE: c_int = 70020;
 pub const IW_ERROR_NOT_ALLOWED: c_int = 70021;
 pub const IW_ERROR_UNSUPPORTED: c_int = 70022;
+pub const IW_ERROR_EOF: c_int = 70023;
+pub const IW_ERROR_UNEXPECTED_INPUT: c_int = 70024;
+pub const IW_ERROR_IO: c_int = 70025;
+pub const IW_ERROR_INVALID_CONFIG: c_int = 70026;
 pub const iw_ecode = c_uint;
 pub const IWLOG_ERROR: c_int = 0;
 pub const IWLOG_WARN: c_int = 1;
 pub const IWLOG_INFO: c_int = 2;
-pub const IWLOG_DEBUG: c_int = 3;
+pub const IWLOG_VERBOSE: c_int = 3;
+pub const IWLOG_DEBUG: c_int = 4;
 pub const iwlog_lvl = c_uint;
 pub const IWLOG_DEFAULT_OPTS = extern struct {
     out: [*c]FILE,
 };
-pub const IWLOG_FN = ?fn ([*c]FILE, locale_t, iwlog_lvl, iwrc, c_int, c_int, [*c]const u8, c_int, u64, ?*anyopaque, [*c]const u8, [*c]struct___va_list_tag, bool) callconv(.C) iwrc;
-pub const IWLOG_ECODE_FN = ?fn (locale_t, u32) callconv(.C) [*c]const u8;
+pub const IWLOG_FN = ?*const fn ([*c]FILE, locale_t, iwlog_lvl, iwrc, c_int, c_int, [*c]const u8, c_int, u64, ?*anyopaque, [*c]const u8, [*c]struct___va_list_tag, bool) callconv(.C) iwrc;
+pub const IWLOG_ECODE_FN = ?*const fn (locale_t, u32) callconv(.C) [*c]const u8;
 pub extern fn iwrc_set_errno(rc: iwrc, errno_code: c_int) iwrc;
 pub extern fn iwrc_strip_errno(rc: [*c]iwrc) u32;
 pub extern fn iwrc_strip_code(rc: [*c]iwrc) void;
@@ -1144,6 +999,296 @@ pub extern fn iwlog2(lvl: iwlog_lvl, ecode: iwrc, file: [*c]const u8, line: c_in
 pub extern fn iwlog3(lvl: iwlog_lvl, ecode: iwrc, file: [*c]const u8, line: c_int, data: [*c]const u8) void;
 pub extern fn iwlog_va(out: [*c]FILE, lvl: iwlog_lvl, ecode: iwrc, file: [*c]const u8, line: c_int, fmt: [*c]const u8, argp: [*c]struct___va_list_tag, no_va: bool) iwrc;
 pub extern fn iwlog_init() iwrc;
+pub const struct__JBL = opaque {};
+pub const JBL = ?*struct__JBL;
+pub const _JBL_ERROR_START: c_int = 76000;
+pub const JBL_ERROR_INVALID_BUFFER: c_int = 76001;
+pub const JBL_ERROR_CREATION: c_int = 76002;
+pub const JBL_ERROR_INVALID: c_int = 76003;
+pub const JBL_ERROR_PARSE_JSON: c_int = 76004;
+pub const JBL_ERROR_PARSE_UNQUOTED_STRING: c_int = 76005;
+pub const JBL_ERROR_PARSE_INVALID_CODEPOINT: c_int = 76006;
+pub const JBL_ERROR_PARSE_INVALID_UTF8: c_int = 76007;
+pub const JBL_ERROR_JSON_POINTER: c_int = 76008;
+pub const JBL_ERROR_PATH_NOTFOUND: c_int = 76009;
+pub const JBL_ERROR_PATCH_INVALID: c_int = 76010;
+pub const JBL_ERROR_PATCH_INVALID_OP: c_int = 76011;
+pub const JBL_ERROR_PATCH_NOVALUE: c_int = 76012;
+pub const JBL_ERROR_PATCH_TARGET_INVALID: c_int = 76013;
+pub const JBL_ERROR_PATCH_INVALID_VALUE: c_int = 76014;
+pub const JBL_ERROR_PATCH_INVALID_ARRAY_INDEX: c_int = 76015;
+pub const JBL_ERROR_NOT_AN_OBJECT: c_int = 76016;
+pub const JBL_ERROR_TYPE_MISMATCHED: c_int = 76017;
+pub const JBL_ERROR_PATCH_TEST_FAILED: c_int = 76018;
+pub const JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED: c_int = 76019;
+pub const _JBL_ERROR_END: c_int = 76020;
+pub const jbl_ecode_t = c_uint;
+pub const struct__JBL_iterator = extern struct {
+    pnext: [*c]u8,
+    plimit: [*c]u8,
+    type: c_int,
+    count: c_int,
+    current: c_int,
+};
+pub const JBL_iterator = struct__JBL_iterator;
+pub const jbl_print_flags_t = u8;
+pub const jbn_visitor_cmd_t = u8;
+pub const JBV_NONE: c_int = 0;
+pub const JBV_NULL: c_int = 1;
+pub const JBV_BOOL: c_int = 2;
+pub const JBV_I64: c_int = 3;
+pub const JBV_F64: c_int = 4;
+pub const JBV_STR: c_int = 5;
+pub const JBV_OBJECT: c_int = 6;
+pub const JBV_ARRAY: c_int = 7;
+pub const jbl_type_t = c_uint;
+const union_unnamed_20 = extern union {
+    vptr: [*c]const u8,
+    vbool: bool,
+    vi64: i64,
+    vf64: f64,
+};
+pub const struct__JBL_NODE = extern struct {
+    next: [*c]struct__JBL_NODE,
+    prev: [*c]struct__JBL_NODE,
+    parent: [*c]struct__JBL_NODE,
+    key: [*c]const u8,
+    klidx: c_int,
+    flags: u32,
+    child: [*c]struct__JBL_NODE,
+    vsize: c_int,
+    type: jbl_type_t,
+    unnamed_0: union_unnamed_20,
+};
+pub const JBL_NODE = [*c]struct__JBL_NODE;
+pub const JBP_ADD: c_int = 1;
+pub const JBP_REMOVE: c_int = 2;
+pub const JBP_REPLACE: c_int = 3;
+pub const JBP_COPY: c_int = 4;
+pub const JBP_MOVE: c_int = 5;
+pub const JBP_TEST: c_int = 6;
+pub const JBP_INCREMENT: c_int = 7;
+pub const JBP_ADD_CREATE: c_int = 8;
+pub const JBP_SWAP: c_int = 9;
+pub const jbp_patch_t = c_uint;
+pub const struct__JBL_PATCH = extern struct {
+    op: jbp_patch_t,
+    path: [*c]const u8,
+    from: [*c]const u8,
+    vjson: [*c]const u8,
+    vnode: JBL_NODE,
+};
+pub const JBL_PATCH = struct__JBL_PATCH;
+pub const struct__JBL_PTR = extern struct {
+    op: u64,
+    cnt: c_int,
+    sz: c_int,
+    n: [1][*c]u8,
+};
+pub const JBL_PTR = [*c]struct__JBL_PTR;
+pub const jbl_json_printer = ?*const fn ([*c]const u8, c_int, u8, c_int, ?*anyopaque) callconv(.C) iwrc;
+pub extern fn iwjson_ftoa(val: c_longdouble, buf: [*c]u8, out_len: [*c]usize) void;
+pub extern fn jbl_create_empty_object(jblp: [*c]JBL) iwrc;
+pub extern fn jbl_create_empty_array(jblp: [*c]JBL) iwrc;
+pub extern fn jbl_set_user_data(jbl: JBL, user_data: ?*anyopaque, user_data_free_fn: ?*const fn (?*anyopaque) callconv(.C) void) void;
+pub extern fn jbl_get_user_data(jbl: JBL) ?*anyopaque;
+pub extern fn jbl_set_int64(jbl: JBL, key: [*c]const u8, v: i64) iwrc;
+pub extern fn jbl_set_f64(jbl: JBL, key: [*c]const u8, v: f64) iwrc;
+pub extern fn jbl_set_string(jbl: JBL, key: [*c]const u8, v: [*c]const u8) iwrc;
+pub extern fn jbl_set_string_printf(jbl: JBL, key: [*c]const u8, format: [*c]const u8, ...) iwrc;
+pub extern fn jbl_set_bool(jbl: JBL, key: [*c]const u8, v: bool) iwrc;
+pub extern fn jbl_set_null(jbl: JBL, key: [*c]const u8) iwrc;
+pub extern fn jbl_set_empty_array(jbl: JBL, key: [*c]const u8) iwrc;
+pub extern fn jbl_set_empty_object(jbl: JBL, key: [*c]const u8) iwrc;
+pub extern fn jbl_set_nested(jbl: JBL, key: [*c]const u8, nested: JBL) iwrc;
+pub extern fn jbl_from_buf_keep(jblp: [*c]JBL, buf: ?*anyopaque, bufsz: usize, keep_on_destroy: bool) iwrc;
+pub extern fn jbl_clone(src: JBL, targetp: [*c]JBL) iwrc;
+pub extern fn jbl_object_copy_to(src: JBL, target: JBL) iwrc;
+pub extern fn jbn_clone(src: JBL_NODE, targetp: [*c]JBL_NODE, pool: ?*IWPOOL) iwrc;
+pub extern fn jbn_apply_from(target: JBL_NODE, from: JBL_NODE) void;
+pub extern fn jbn_copy_path(src: JBL_NODE, src_path: [*c]const u8, target: JBL_NODE, target_path: [*c]const u8, overwrite_on_nulls: bool, no_src_clone: bool, pool: ?*IWPOOL) iwrc;
+pub extern fn jbn_copy_paths(src: JBL_NODE, target: JBL_NODE, paths: [*c][*c]const u8, overwrite_on_nulls: bool, no_src_clone: bool, pool: ?*IWPOOL) iwrc;
+pub extern fn jbl_clone_into_pool(src: JBL, targetp: [*c]JBL, pool: ?*IWPOOL) iwrc;
+pub extern fn jbl_from_json(jblp: [*c]JBL, jsonstr: [*c]const u8) iwrc;
+pub extern fn jbl_from_json_printf(jblp: [*c]JBL, format: [*c]const u8, ...) iwrc;
+pub extern fn jbl_from_json_printf_va(jblp: [*c]JBL, format: [*c]const u8, va: [*c]struct___va_list_tag) iwrc;
+pub extern fn jbl_type(jbl: JBL) jbl_type_t;
+pub extern fn jbl_count(jbl: JBL) usize;
+pub extern fn jbl_size(jbl: JBL) usize;
+pub extern fn jbl_structure_size() usize;
+pub extern fn jbl_from_buf_keep_onstack(jbl: JBL, buf: ?*anyopaque, bufsz: usize) iwrc;
+pub extern fn jbl_get_i32(jbl: JBL) i32;
+pub extern fn jbl_get_i64(jbl: JBL) i64;
+pub extern fn jbl_get_f64(jbl: JBL) f64;
+pub extern fn jbl_get_str(jbl: JBL) [*c]const u8;
+pub extern fn jbl_object_get_i64(jbl: JBL, key: [*c]const u8, out: [*c]i64) iwrc;
+pub extern fn jbl_object_get_f64(jbl: JBL, key: [*c]const u8, out: [*c]f64) iwrc;
+pub extern fn jbl_object_get_bool(jbl: JBL, key: [*c]const u8, out: [*c]bool) iwrc;
+pub extern fn jbl_object_get_str(jbl: JBL, key: [*c]const u8, out: [*c][*c]const u8) iwrc;
+pub extern fn jbl_object_get_fill_jbl(jbl: JBL, key: [*c]const u8, out: JBL) iwrc;
+pub extern fn jbl_object_get_type(jbl: JBL, key: [*c]const u8) jbl_type_t;
+pub extern fn jbl_copy_strn(jbl: JBL, buf: [*c]u8, bufsz: usize) usize;
+pub extern fn jbl_at(jbl: JBL, path: [*c]const u8, res: [*c]JBL) iwrc;
+pub extern fn jbn_at(node: JBL_NODE, path: [*c]const u8, res: [*c]JBL_NODE) iwrc;
+pub extern fn jbn_path_compare(n1: JBL_NODE, n2: JBL_NODE, path: [*c]const u8, vtype: jbl_type_t, rcp: [*c]iwrc) c_int;
+pub extern fn jbn_paths_compare(n1: JBL_NODE, n1path: [*c]const u8, n2: JBL_NODE, n2path: [*c]const u8, vtype: jbl_type_t, rcp: [*c]iwrc) c_int;
+pub extern fn jbn_path_compare_str(n: JBL_NODE, path: [*c]const u8, sv: [*c]const u8, rcp: [*c]iwrc) c_int;
+pub extern fn jbn_path_compare_i64(n: JBL_NODE, path: [*c]const u8, iv: i64, rcp: [*c]iwrc) c_int;
+pub extern fn jbn_path_compare_f64(n: JBL_NODE, path: [*c]const u8, fv: f64, rcp: [*c]iwrc) c_int;
+pub extern fn jbn_path_compare_bool(n: JBL_NODE, path: [*c]const u8, bv: bool, rcp: [*c]iwrc) c_int;
+pub extern fn jbl_at2(jbl: JBL, jp: JBL_PTR, res: [*c]JBL) iwrc;
+pub extern fn jbn_at2(node: JBL_NODE, jp: JBL_PTR, res: [*c]JBL_NODE) iwrc;
+pub extern fn jbl_as_buf(jbl: JBL, buf: [*c]?*anyopaque, size: [*c]usize) iwrc;
+pub extern fn jbl_as_json(jbl: JBL, pt: jbl_json_printer, op: ?*anyopaque, pf: jbl_print_flags_t) iwrc;
+pub extern fn jbl_fstream_json_printer(data: [*c]const u8, size: c_int, ch: u8, count: c_int, op: ?*anyopaque) iwrc;
+pub extern fn jbl_xstr_json_printer(data: [*c]const u8, size: c_int, ch: u8, count: c_int, op: ?*anyopaque) iwrc;
+pub extern fn jbl_count_json_printer(data: [*c]const u8, size: c_int, ch: u8, count: c_int, op: ?*anyopaque) iwrc;
+pub extern fn jbl_destroy(jblp: [*c]JBL) void;
+pub extern fn jbl_create_iterator_holder(jblp: [*c]JBL) iwrc;
+pub extern fn jbl_iterator_init(jbl: JBL, iter: [*c]JBL_iterator) iwrc;
+pub extern fn jbl_iterator_next(iter: [*c]JBL_iterator, holder: JBL, pkey: [*c][*c]u8, klen: [*c]c_int) bool;
+pub extern fn jbl_to_node(jbl: JBL, node: [*c]JBL_NODE, clone_strings: bool, pool: ?*IWPOOL) iwrc;
+pub extern fn jbn_from_json(json: [*c]const u8, node: [*c]JBL_NODE, pool: ?*IWPOOL) iwrc;
+pub extern fn jbn_from_json_printf(node: [*c]JBL_NODE, pool: ?*IWPOOL, format: [*c]const u8, ...) iwrc;
+pub extern fn jbn_from_json_printf_va(node: [*c]JBL_NODE, pool: ?*IWPOOL, format: [*c]const u8, va: [*c]struct___va_list_tag) iwrc;
+pub extern fn jbn_as_json(node: JBL_NODE, pt: jbl_json_printer, op: ?*anyopaque, pf: jbl_print_flags_t) iwrc;
+pub extern fn jbl_fill_from_node(jbl: JBL, node: JBL_NODE) iwrc;
+pub extern fn jbl_from_node(jblp: [*c]JBL, node: JBL_NODE) iwrc;
+pub extern fn jbn_compare_nodes(n1: JBL_NODE, n2: JBL_NODE, rcp: [*c]iwrc) c_int;
+pub extern fn jbn_add_item(parent: JBL_NODE, node: JBL_NODE) void;
+pub extern fn jbn_add_item_str(parent: JBL_NODE, key: [*c]const u8, val: [*c]const u8, vlen: c_int, node_out: [*c]JBL_NODE, pool: ?*IWPOOL) iwrc;
+pub extern fn jbn_add_item_null(parent: JBL_NODE, key: [*c]const u8, pool: ?*IWPOOL) iwrc;
+pub extern fn jbn_add_item_i64(parent: JBL_NODE, key: [*c]const u8, val: i64, node_out: [*c]JBL_NODE, pool: ?*IWPOOL) iwrc;
+pub extern fn jbn_add_item_f64(parent: JBL_NODE, key: [*c]const u8, val: f64, node_out: [*c]JBL_NODE, pool: ?*IWPOOL) iwrc;
+pub extern fn jbn_add_item_obj(parent: JBL_NODE, key: [*c]const u8, node_out: [*c]JBL_NODE, pool: ?*IWPOOL) iwrc;
+pub extern fn jbn_add_item_arr(parent: JBL_NODE, key: [*c]const u8, node_out: [*c]JBL_NODE, pool: ?*IWPOOL) iwrc;
+pub extern fn jbn_add_item_bool(parent: JBL_NODE, key: [*c]const u8, val: bool, node_out: [*c]JBL_NODE, pool: ?*IWPOOL) iwrc;
+pub extern fn jbn_remove_item(parent: JBL_NODE, child: JBL_NODE) void;
+pub extern fn jbn_detach2(target: JBL_NODE, path: JBL_PTR) JBL_NODE;
+pub extern fn jbn_detach(target: JBL_NODE, path: [*c]const u8) JBL_NODE;
+pub extern fn jbn_data(node: JBL_NODE) void;
+pub extern fn jbn_length(node: JBL_NODE) c_int;
+pub extern fn jbl_ptr_alloc(path: [*c]const u8, jpp: [*c]JBL_PTR) iwrc;
+pub extern fn jbl_ptr_alloc_pool(path: [*c]const u8, jpp: [*c]JBL_PTR, pool: ?*IWPOOL) iwrc;
+pub extern fn jbl_ptr_cmp(p1: JBL_PTR, p2: JBL_PTR) c_int;
+pub extern fn jbl_ptr_serialize(ptr: JBL_PTR, xstr: ?*IWXSTR) iwrc;
+pub const struct__JBN_VCTX = extern struct {
+    root: JBL_NODE,
+    op: ?*anyopaque,
+    result: ?*anyopaque,
+    pool: ?*IWPOOL,
+    pos: c_int,
+    terminate: bool,
+};
+pub const JBN_VCTX = struct__JBN_VCTX;
+pub const JBN_VISITOR = ?*const fn (c_int, JBL_NODE, [*c]const u8, c_int, [*c]JBN_VCTX, [*c]iwrc) callconv(.C) jbn_visitor_cmd_t;
+pub extern fn jbn_visit(node: JBL_NODE, lvl: c_int, vctx: [*c]JBN_VCTX, visitor: JBN_VISITOR) iwrc;
+pub extern fn jbn_patch_auto(root: JBL_NODE, patch: JBL_NODE, pool: ?*IWPOOL) iwrc;
+pub extern fn jbn_merge_patch(root: JBL_NODE, patch: JBL_NODE, pool: ?*IWPOOL) iwrc;
+pub extern fn jbn_patch(root: JBL_NODE, patch: [*c]const JBL_PATCH, cnt: usize, pool: ?*IWPOOL) iwrc;
+pub extern fn jbn_merge_patch_from_json(root: JBL_NODE, patchjson: [*c]const u8, pool: ?*IWPOOL) iwrc;
+pub extern fn jbl_patch(jbl: JBL, patch: [*c]const JBL_PATCH, cnt: usize) iwrc;
+pub extern fn jbl_patch_from_json(jbl: JBL, patchjson: [*c]const u8) iwrc;
+pub extern fn jbl_merge_patch(jbl: JBL, patchjson: [*c]const u8) iwrc;
+pub extern fn jbl_merge_patch_jbl(jbl: JBL, patch: JBL) iwrc;
+pub extern fn jbl_init() iwrc;
+pub const struct_iwn_http_server = extern struct {
+    listen: [*c]const u8,
+    user_data: ?*anyopaque,
+    fd: c_int,
+    port: c_int,
+};
+pub const struct_iwn_http_req = extern struct {
+    user_data: ?*anyopaque,
+    user_id: i64,
+    user_mtx: pthread_mutex_t,
+    user_flags: u64,
+    server_user_data: ?*anyopaque,
+    session_cookie_params: [*c]const u8,
+    on_request_dispose: ?*const fn ([*c]struct_iwn_http_req) callconv(.C) void,
+    on_response_headers_write: ?*const fn ([*c]struct_iwn_http_req) callconv(.C) void,
+    on_response_completed: ?*const fn ([*c]struct_iwn_http_req) callconv(.C) bool,
+    poller_adapter: [*c]struct_iwn_poller_adapter,
+    session_cookie_max_age_sec: c_int,
+};
+pub const iwn_http_server_on_dispose = ?*const fn ([*c]const struct_iwn_http_server) callconv(.C) void;
+pub const iwn_http_server_request_handler = ?*const fn ([*c]struct_iwn_http_req) callconv(.C) bool;
+pub const iwn_http_server_chunk_handler = ?*const fn ([*c]struct_iwn_http_req, [*c]bool) callconv(.C) bool;
+pub const iwn_http_server_proxy_handler = ?*const fn ([*c]struct_iwn_http_req) callconv(.C) bool;
+pub const struct_iwn_http_server_ssl_spec = extern struct {
+    certs: [*c]const u8,
+    private_key: [*c]const u8,
+    certs_len: isize,
+    private_key_len: isize,
+    private_key_in_buffer: bool,
+    certs_in_buffer: bool,
+};
+pub const struct_iwn_http_server_spec = extern struct {
+    request_handler: iwn_http_server_request_handler,
+    proxy_handler: iwn_http_server_proxy_handler,
+    poller: ?*struct_iwn_poller,
+    listen: [*c]const u8,
+    user_data: ?*anyopaque,
+    on_server_dispose: iwn_http_server_on_dispose,
+    ssl: struct_iwn_http_server_ssl_spec,
+    port: c_int,
+    socket_queue_size: c_int,
+    request_buf_max_size: c_int,
+    request_buf_size: c_int,
+    request_timeout_keepalive_sec: c_int,
+    request_timeout_sec: c_int,
+    request_token_max_len: c_int,
+    request_max_headers_count: c_int,
+};
+pub extern fn iwn_http_server_create([*c]const struct_iwn_http_server_spec, out_fd: [*c]c_int) iwrc;
+pub extern fn iwn_http_server_ssl_set(poller: ?*struct_iwn_poller, server_fd: c_int, ssl: [*c]const struct_iwn_http_server_ssl_spec) bool;
+pub extern fn iwn_http_request_chunk_next([*c]struct_iwn_http_req, iwn_http_server_chunk_handler) void;
+pub extern fn iwn_http_request_chunk_get([*c]struct_iwn_http_req) struct_iwn_val;
+pub extern fn iwn_http_request_is_streamed([*c]struct_iwn_http_req) bool;
+pub extern fn iwn_http_request_is_secure([*c]struct_iwn_http_req) bool;
+pub extern fn iwn_http_request_remote_ip([*c]struct_iwn_http_req) [*c]const u8;
+pub extern fn iwn_http_request_target([*c]struct_iwn_http_req) struct_iwn_val;
+pub extern fn iwn_http_request_target_is([*c]struct_iwn_http_req, target: [*c]const u8, target_len: isize) bool;
+pub extern fn iwn_http_request_method([*c]struct_iwn_http_req) struct_iwn_val;
+pub extern fn iwn_http_request_body([*c]struct_iwn_http_req) struct_iwn_val;
+pub extern fn iwn_http_request_user_lock([*c]struct_iwn_http_req) void;
+pub extern fn iwn_http_request_user_unlock([*c]struct_iwn_http_req) void;
+pub extern fn iwn_http_request_header_get([*c]struct_iwn_http_req, header_name: [*c]const u8, header_name_len: isize) struct_iwn_val;
+pub extern fn iwn_http_request_headers_iterate([*c]struct_iwn_http_req, key: [*c]struct_iwn_val, val: [*c]struct_iwn_val, iter: [*c]c_int) bool;
+pub extern fn iwn_http_connection_set_automatic(request: [*c]struct_iwn_http_req) void;
+pub extern fn iwn_http_connection_set_keep_alive([*c]struct_iwn_http_req, keep_alive: bool) void;
+pub extern fn iwn_http_connection_set_upgrade([*c]struct_iwn_http_req) void;
+pub extern fn iwn_http_connection_is_upgrade([*c]struct_iwn_http_req) bool;
+pub extern fn iwn_http_proxy_is_error([*c]struct_iwn_http_req) iwrc;
+pub extern fn iwn_http_proxy_is_enabled([*c]struct_iwn_http_req) bool;
+pub extern fn iwn_http_proxy_url_set([*c]struct_iwn_http_req, url: [*c]const u8, url_len: isize) bool;
+pub extern fn iwn_http_proxy_header_set([*c]struct_iwn_http_req, header_name: [*c]const u8, header_value: [*c]const u8, header_value_len: isize) bool;
+pub extern fn iwn_http_proxy_channel_buf_max_size_set([*c]struct_iwn_http_req, max_size: usize) bool;
+pub extern fn iwn_http_proxy_timeout_connect_set([*c]struct_iwn_http_req, timeout_sec: u32) bool;
+pub extern fn iwn_http_proxy_timeout_data_set([*c]struct_iwn_http_req, timeout_sec: u32) bool;
+pub extern fn iwn_http_response_code_set([*c]struct_iwn_http_req, code: c_int) iwrc;
+pub extern fn iwn_http_response_code_get([*c]struct_iwn_http_req) c_int;
+pub extern fn iwn_http_response_header_set([*c]struct_iwn_http_req, header_name: [*c]const u8, header_value: [*c]const u8, header_value_len: isize) iwrc;
+pub extern fn iwn_http_response_header_i64_set([*c]struct_iwn_http_req, header_name: [*c]const u8, header_value: i64) iwrc;
+pub extern fn iwn_http_response_header_printf_va(req: [*c]struct_iwn_http_req, header_name: [*c]const u8, format: [*c]const u8, va: [*c]struct___va_list_tag) iwrc;
+pub extern fn iwn_http_response_header_printf(req: [*c]struct_iwn_http_req, header_name: [*c]const u8, format: [*c]const u8, ...) iwrc;
+pub extern fn iwn_http_response_header_add([*c]struct_iwn_http_req, header_name: [*c]const u8, header_value: [*c]const u8, header_value_len: isize) iwrc;
+pub extern fn iwn_http_response_header_get([*c]struct_iwn_http_req, header_name: [*c]const u8) struct_iwn_val;
+pub extern fn iwn_http_response_body_clear([*c]struct_iwn_http_req) void;
+pub extern fn iwn_http_response_body_set([*c]struct_iwn_http_req, body: [*c]const u8, body_len: isize, body_free: ?*const fn (?*anyopaque) callconv(.C) void) void;
+pub extern fn iwn_http_response_end([*c]struct_iwn_http_req) iwrc;
+pub extern fn iwn_http_response_by_code([*c]struct_iwn_http_req, code: c_int) bool;
+pub extern fn iwn_http_response_write([*c]struct_iwn_http_req, status_code: c_int, content_type: [*c]const u8, body: [*c]const u8, body_len: isize) bool;
+pub extern fn iwn_http_response_write_jbl([*c]struct_iwn_http_req, status_code: c_int, jbl: JBL) bool;
+pub extern fn iwn_http_response_write_jbn([*c]struct_iwn_http_req, status_code: c_int, n: JBL_NODE) bool;
+pub extern fn iwn_http_response_printf([*c]struct_iwn_http_req, status_code: c_int, content_type: [*c]const u8, body_fmt: [*c]const u8, ...) bool;
+pub extern fn iwn_http_response_printf_va([*c]struct_iwn_http_req, status_code: c_int, content_type: [*c]const u8, body_fmt: [*c]const u8, va: [*c]struct___va_list_tag) bool;
+pub extern fn iwn_http_response_chunk_write([*c]struct_iwn_http_req, body: [*c]u8, body_len: isize, chunk_cb: iwn_http_server_chunk_handler, again: [*c]bool) iwrc;
+pub extern fn iwn_http_response_chunk_end([*c]struct_iwn_http_req) iwrc;
+pub extern fn iwn_http_response_stream_start([*c]struct_iwn_http_req, chunk_cb: iwn_http_server_chunk_handler) iwrc;
+pub extern fn iwn_http_response_stream_write([*c]struct_iwn_http_req, buf: [*c]u8, buf_len: isize, buf_free: ?*const fn (?*anyopaque) callconv(.C) void, chunk_cb: iwn_http_server_chunk_handler, again: [*c]bool) void;
+pub extern fn iwn_http_response_stream_end([*c]struct_iwn_http_req) void;
+pub extern fn iwn_http_inject_poller_events_handler([*c]struct_iwn_http_req, eh: iwn_on_poller_adapter_event) void;
 pub const _WF_ERROR_START: c_int = 275000;
 pub const WF_ERROR_INVALID_FORM_DATA: c_int = 275001;
 pub const WF_ERROR_PARENT_ROUTE_FROM_DIFFERENT_CONTEXT: c_int = 275002;
@@ -1175,8 +1320,8 @@ pub const struct_iwn_wf_req = extern struct {
     form_params: struct_iwn_pairs,
     flags: u32,
 };
-pub const iwn_wf_handler = ?fn ([*c]struct_iwn_wf_req, ?*anyopaque) callconv(.C) c_int;
-pub const iwn_wf_handler_dispose = ?fn ([*c]struct_iwn_wf_ctx, ?*anyopaque) callconv(.C) void;
+pub const iwn_wf_handler = ?*const fn ([*c]struct_iwn_wf_req, ?*anyopaque) callconv(.C) c_int;
+pub const iwn_wf_handler_dispose = ?*const fn ([*c]struct_iwn_wf_ctx, ?*anyopaque) callconv(.C) void;
 pub const struct_iwn_wf_route = extern struct {
     ctx: [*c]struct_iwn_wf_ctx,
     parent: [*c]const struct_iwn_wf_route,
@@ -1191,17 +1336,18 @@ pub const struct_iwn_wf_ctx = extern struct {
     root: [*c]const struct_iwn_wf_route,
 };
 pub const struct_iwn_wf_session_store = extern struct {
-    get: ?fn ([*c]struct_iwn_wf_session_store, [*c]const u8, [*c]const u8) callconv(.C) [*c]u8,
-    put: ?fn ([*c]struct_iwn_wf_session_store, [*c]const u8, [*c]const u8, [*c]const u8) callconv(.C) iwrc,
-    del: ?fn ([*c]struct_iwn_wf_session_store, [*c]const u8, [*c]const u8) callconv(.C) void,
-    clear: ?fn ([*c]struct_iwn_wf_session_store, [*c]const u8) callconv(.C) void,
-    dispose: ?fn ([*c]struct_iwn_wf_session_store) callconv(.C) void,
+    get: ?*const fn ([*c]struct_iwn_wf_session_store, [*c]const u8, [*c]const u8) callconv(.C) [*c]u8,
+    put: ?*const fn ([*c]struct_iwn_wf_session_store, [*c]const u8, [*c]const u8, [*c]const u8) callconv(.C) iwrc,
+    del: ?*const fn ([*c]struct_iwn_wf_session_store, [*c]const u8, [*c]const u8) callconv(.C) void,
+    clear: ?*const fn ([*c]struct_iwn_wf_session_store, [*c]const u8) callconv(.C) void,
+    dispose: ?*const fn ([*c]struct_iwn_wf_session_store) callconv(.C) void,
     user_data: ?*anyopaque,
 };
 pub const struct_iwn_wf_server_spec = extern struct {
     poller: ?*struct_iwn_poller,
     ssl: struct_iwn_http_server_ssl_spec,
     session_store: struct_iwn_wf_session_store,
+    proxy_handler: iwn_http_server_proxy_handler,
     listen: [*c]const u8,
     port: c_int,
     socket_queue_size: c_int,
@@ -1221,6 +1367,7 @@ pub extern fn iwn_wf_poller_get(ctx: [*c]struct_iwn_wf_ctx) ?*struct_iwn_poller;
 pub extern fn iwn_wf_server_fd_get(ctx: [*c]struct_iwn_wf_ctx) c_int;
 pub extern fn iwn_wf_request_submatch_first([*c]const struct_iwn_wf_req) [*c]struct_iwn_wf_route_submatch;
 pub extern fn iwn_wf_request_submatch_last([*c]const struct_iwn_wf_req) [*c]struct_iwn_wf_route_submatch;
+pub extern fn iwn_wf_parse_query_inplace(pool: ?*IWPOOL, pairs: [*c]struct_iwn_pairs, query: [*c]u8, query_len: usize) iwrc;
 pub extern fn iwn_wf_header_val_part_next(header_val: [*c]const u8, ptr: [*c]const u8, header_val_end: [*c]const u8, out: [*c]struct_iwn_pair) [*c]const u8;
 pub extern fn iwn_wf_header_val_part_find(header_val: [*c]const u8, header_val_end: [*c]const u8, part_name: [*c]const u8) struct_iwn_pair;
 pub extern fn iwn_wf_header_part_find([*c]struct_iwn_wf_req, header_name: [*c]const u8, part_name: [*c]const u8) struct_iwn_pair;
@@ -1251,6 +1398,14 @@ pub extern fn iwftoa(v: c_longdouble, buf: [*c]u8) [*c]u8;
 pub extern fn iwafcmp(aptr: [*c]const u8, asiz: c_int, bptr: [*c]const u8, bsiz: c_int) c_int;
 pub extern fn iwhex2bin(hex: [*c]const u8, hexlen: c_int, out: [*c]u8, max: c_int) usize;
 pub extern fn iwbin2hex(hex: [*c]u8, hex_maxlen: usize, bin: [*c]const u8, bin_len: usize) [*c]u8;
+pub const P_ALL: c_int = 0;
+pub const P_PID: c_int = 1;
+pub const P_PGID: c_int = 2;
+pub const idtype_t = c_uint;
+pub const _Float32 = f32;
+pub const _Float64 = f64;
+pub const _Float32x = f64;
+pub const _Float64x = c_longdouble;
 pub const div_t = extern struct {
     quot: c_int,
     rem: c_int,
@@ -1264,22 +1419,10 @@ pub const lldiv_t = extern struct {
     rem: c_longlong,
 };
 pub extern fn __ctype_get_mb_cur_max() usize;
-pub fn atof(arg___nptr: [*c]const u8) callconv(.C) f64 {
-    var __nptr = arg___nptr;
-    return strtod(__nptr, @ptrCast([*c][*c]u8, @alignCast(@import("std").meta.alignment([*c]u8), @intToPtr(?*anyopaque, @as(c_int, 0)))));
-}
-pub fn atoi(arg___nptr: [*c]const u8) callconv(.C) c_int {
-    var __nptr = arg___nptr;
-    return @bitCast(c_int, @truncate(c_int, strtol(__nptr, @ptrCast([*c][*c]u8, @alignCast(@import("std").meta.alignment([*c]u8), @intToPtr(?*anyopaque, @as(c_int, 0)))), @as(c_int, 10))));
-}
-pub fn atol(arg___nptr: [*c]const u8) callconv(.C) c_long {
-    var __nptr = arg___nptr;
-    return strtol(__nptr, @ptrCast([*c][*c]u8, @alignCast(@import("std").meta.alignment([*c]u8), @intToPtr(?*anyopaque, @as(c_int, 0)))), @as(c_int, 10));
-}
-pub fn atoll(arg___nptr: [*c]const u8) callconv(.C) c_longlong {
-    var __nptr = arg___nptr;
-    return strtoll(__nptr, @ptrCast([*c][*c]u8, @alignCast(@import("std").meta.alignment([*c]u8), @intToPtr(?*anyopaque, @as(c_int, 0)))), @as(c_int, 10));
-}
+pub extern fn atof(__nptr: [*c]const u8) f64;
+pub extern fn atoi(__nptr: [*c]const u8) c_int;
+pub extern fn atol(__nptr: [*c]const u8) c_long;
+pub extern fn atoll(__nptr: [*c]const u8) c_longlong;
 pub extern fn strtod(__nptr: [*c]const u8, __endptr: [*c][*c]u8) f64;
 pub extern fn strtof(__nptr: [*c]const u8, __endptr: [*c][*c]u8) f32;
 pub extern fn strtold(__nptr: [*c]const u8, __endptr: [*c][*c]u8) c_longdouble;
@@ -1339,16 +1482,16 @@ pub extern fn lcong48_r(__param: [*c]c_ushort, __buffer: [*c]struct_drand48_data
 pub extern fn malloc(__size: c_ulong) ?*anyopaque;
 pub extern fn calloc(__nmemb: c_ulong, __size: c_ulong) ?*anyopaque;
 pub extern fn realloc(__ptr: ?*anyopaque, __size: c_ulong) ?*anyopaque;
-pub extern fn free(__ptr: ?*anyopaque) void;
 pub extern fn reallocarray(__ptr: ?*anyopaque, __nmemb: usize, __size: usize) ?*anyopaque;
+pub extern fn free(__ptr: ?*anyopaque) void;
 pub extern fn alloca(__size: c_ulong) ?*anyopaque;
 pub extern fn valloc(__size: usize) ?*anyopaque;
 pub extern fn posix_memalign(__memptr: [*c]?*anyopaque, __alignment: usize, __size: usize) c_int;
 pub extern fn aligned_alloc(__alignment: c_ulong, __size: c_ulong) ?*anyopaque;
 pub extern fn abort() noreturn;
-pub extern fn atexit(__func: ?fn () callconv(.C) void) c_int;
-pub extern fn at_quick_exit(__func: ?fn () callconv(.C) void) c_int;
-pub extern fn on_exit(__func: ?fn (c_int, ?*anyopaque) callconv(.C) void, __arg: ?*anyopaque) c_int;
+pub extern fn atexit(__func: ?*const fn () callconv(.C) void) c_int;
+pub extern fn at_quick_exit(__func: ?*const fn () callconv(.C) void) c_int;
+pub extern fn on_exit(__func: ?*const fn (c_int, ?*anyopaque) callconv(.C) void, __arg: ?*anyopaque) c_int;
 pub extern fn exit(__status: c_int) noreturn;
 pub extern fn quick_exit(__status: c_int) noreturn;
 pub extern fn _Exit(__status: c_int) noreturn;
@@ -1363,32 +1506,8 @@ pub extern fn mkstemps(__template: [*c]u8, __suffixlen: c_int) c_int;
 pub extern fn mkdtemp(__template: [*c]u8) [*c]u8;
 pub extern fn system(__command: [*c]const u8) c_int;
 pub extern fn realpath(noalias __name: [*c]const u8, noalias __resolved: [*c]u8) [*c]u8;
-pub const __compar_fn_t = ?fn (?*const anyopaque, ?*const anyopaque) callconv(.C) c_int;
-pub fn bsearch(arg___key: ?*const anyopaque, arg___base: ?*const anyopaque, arg___nmemb: usize, arg___size: usize, arg___compar: __compar_fn_t) callconv(.C) ?*anyopaque {
-    var __key = arg___key;
-    var __base = arg___base;
-    var __nmemb = arg___nmemb;
-    var __size = arg___size;
-    var __compar = arg___compar;
-    var __l: usize = undefined;
-    var __u: usize = undefined;
-    var __idx: usize = undefined;
-    var __p: ?*const anyopaque = undefined;
-    var __comparison: c_int = undefined;
-    __l = 0;
-    __u = __nmemb;
-    while (__l < __u) {
-        __idx = (__l +% __u) / @bitCast(c_ulong, @as(c_long, @as(c_int, 2)));
-        __p = @intToPtr(?*anyopaque, @ptrToInt(@ptrCast([*c]const u8, @alignCast(@import("std").meta.alignment(u8), __base)) + (__idx *% __size)));
-        __comparison = __compar.?(__key, __p);
-        if (__comparison < @as(c_int, 0)) {
-            __u = __idx;
-        } else if (__comparison > @as(c_int, 0)) {
-            __l = __idx +% @bitCast(c_ulong, @as(c_long, @as(c_int, 1)));
-        } else return @intToPtr(?*anyopaque, @ptrToInt(__p));
-    }
-    return @intToPtr(?*anyopaque, @as(c_int, 0));
-}
+pub const __compar_fn_t = ?*const fn (?*const anyopaque, ?*const anyopaque) callconv(.C) c_int;
+pub extern fn bsearch(__key: ?*const anyopaque, __base: ?*const anyopaque, __nmemb: usize, __size: usize, __compar: __compar_fn_t) ?*anyopaque;
 pub extern fn qsort(__base: ?*anyopaque, __nmemb: usize, __size: usize, __compar: __compar_fn_t) void;
 pub extern fn abs(__x: c_int) c_int;
 pub extern fn labs(__x: c_long) c_long;
@@ -1415,65 +1534,65 @@ pub extern fn rpmatch(__response: [*c]const u8) c_int;
 pub extern fn getsubopt(noalias __optionp: [*c][*c]u8, noalias __tokens: [*c]const [*c]u8, noalias __valuep: [*c][*c]u8) c_int;
 pub extern fn getloadavg(__loadavg: [*c]f64, __nelem: c_int) c_int;
 pub const sig_atomic_t = __sig_atomic_t;
-const struct_unnamed_20 = extern struct {
+const struct_unnamed_22 = extern struct {
     si_pid: __pid_t,
     si_uid: __uid_t,
 };
-const struct_unnamed_21 = extern struct {
+const struct_unnamed_23 = extern struct {
     si_tid: c_int,
     si_overrun: c_int,
     si_sigval: __sigval_t,
 };
-const struct_unnamed_22 = extern struct {
+const struct_unnamed_24 = extern struct {
     si_pid: __pid_t,
     si_uid: __uid_t,
     si_sigval: __sigval_t,
 };
-const struct_unnamed_23 = extern struct {
+const struct_unnamed_25 = extern struct {
     si_pid: __pid_t,
     si_uid: __uid_t,
     si_status: c_int,
     si_utime: __clock_t,
     si_stime: __clock_t,
 };
-const struct_unnamed_26 = extern struct {
+const struct_unnamed_28 = extern struct {
     _lower: ?*anyopaque,
     _upper: ?*anyopaque,
 };
-const union_unnamed_25 = extern union {
-    _addr_bnd: struct_unnamed_26,
+const union_unnamed_27 = extern union {
+    _addr_bnd: struct_unnamed_28,
     _pkey: __uint32_t,
 };
-const struct_unnamed_24 = extern struct {
+const struct_unnamed_26 = extern struct {
     si_addr: ?*anyopaque,
     si_addr_lsb: c_short,
-    _bounds: union_unnamed_25,
+    _bounds: union_unnamed_27,
 };
-const struct_unnamed_27 = extern struct {
+const struct_unnamed_29 = extern struct {
     si_band: c_long,
     si_fd: c_int,
 };
-const struct_unnamed_28 = extern struct {
+const struct_unnamed_30 = extern struct {
     _call_addr: ?*anyopaque,
     _syscall: c_int,
     _arch: c_uint,
 };
-const union_unnamed_19 = extern union {
+const union_unnamed_21 = extern union {
     _pad: [28]c_int,
-    _kill: struct_unnamed_20,
-    _timer: struct_unnamed_21,
-    _rt: struct_unnamed_22,
-    _sigchld: struct_unnamed_23,
-    _sigfault: struct_unnamed_24,
-    _sigpoll: struct_unnamed_27,
-    _sigsys: struct_unnamed_28,
+    _kill: struct_unnamed_22,
+    _timer: struct_unnamed_23,
+    _rt: struct_unnamed_24,
+    _sigchld: struct_unnamed_25,
+    _sigfault: struct_unnamed_26,
+    _sigpoll: struct_unnamed_29,
+    _sigsys: struct_unnamed_30,
 };
 pub const siginfo_t = extern struct {
     si_signo: c_int,
     si_errno: c_int,
     si_code: c_int,
     __pad0: c_int,
-    _sifields: union_unnamed_19,
+    _sifields: union_unnamed_21,
 };
 pub const SI_ASYNCNL: c_int = -60;
 pub const SI_DETHREAD: c_int = -7;
@@ -1485,7 +1604,7 @@ pub const SI_TIMER: c_int = -2;
 pub const SI_QUEUE: c_int = -1;
 pub const SI_USER: c_int = 0;
 pub const SI_KERNEL: c_int = 128;
-const enum_unnamed_29 = c_int;
+const enum_unnamed_31 = c_int;
 pub const ILL_ILLOPC: c_int = 1;
 pub const ILL_ILLOPN: c_int = 2;
 pub const ILL_ILLADR: c_int = 3;
@@ -1495,7 +1614,7 @@ pub const ILL_PRVREG: c_int = 6;
 pub const ILL_COPROC: c_int = 7;
 pub const ILL_BADSTK: c_int = 8;
 pub const ILL_BADIADDR: c_int = 9;
-const enum_unnamed_30 = c_uint;
+const enum_unnamed_32 = c_uint;
 pub const FPE_INTDIV: c_int = 1;
 pub const FPE_INTOVF: c_int = 2;
 pub const FPE_FLTDIV: c_int = 3;
@@ -1506,7 +1625,7 @@ pub const FPE_FLTINV: c_int = 7;
 pub const FPE_FLTSUB: c_int = 8;
 pub const FPE_FLTUNK: c_int = 14;
 pub const FPE_CONDTRAP: c_int = 15;
-const enum_unnamed_31 = c_uint;
+const enum_unnamed_33 = c_uint;
 pub const SEGV_MAPERR: c_int = 1;
 pub const SEGV_ACCERR: c_int = 2;
 pub const SEGV_BNDERR: c_int = 3;
@@ -1514,37 +1633,35 @@ pub const SEGV_PKUERR: c_int = 4;
 pub const SEGV_ACCADI: c_int = 5;
 pub const SEGV_ADIDERR: c_int = 6;
 pub const SEGV_ADIPERR: c_int = 7;
-pub const SEGV_MTEAERR: c_int = 8;
-pub const SEGV_MTESERR: c_int = 9;
-const enum_unnamed_32 = c_uint;
+const enum_unnamed_34 = c_uint;
 pub const BUS_ADRALN: c_int = 1;
 pub const BUS_ADRERR: c_int = 2;
 pub const BUS_OBJERR: c_int = 3;
 pub const BUS_MCEERR_AR: c_int = 4;
 pub const BUS_MCEERR_AO: c_int = 5;
-const enum_unnamed_33 = c_uint;
+const enum_unnamed_35 = c_uint;
 pub const CLD_EXITED: c_int = 1;
 pub const CLD_KILLED: c_int = 2;
 pub const CLD_DUMPED: c_int = 3;
 pub const CLD_TRAPPED: c_int = 4;
 pub const CLD_STOPPED: c_int = 5;
 pub const CLD_CONTINUED: c_int = 6;
-const enum_unnamed_34 = c_uint;
+const enum_unnamed_36 = c_uint;
 pub const POLL_IN: c_int = 1;
 pub const POLL_OUT: c_int = 2;
 pub const POLL_MSG: c_int = 3;
 pub const POLL_ERR: c_int = 4;
 pub const POLL_PRI: c_int = 5;
 pub const POLL_HUP: c_int = 6;
-const enum_unnamed_35 = c_uint;
+const enum_unnamed_37 = c_uint;
 pub const sigval_t = __sigval_t;
 pub const sigevent_t = struct_sigevent;
 pub const SIGEV_SIGNAL: c_int = 0;
 pub const SIGEV_NONE: c_int = 1;
 pub const SIGEV_THREAD: c_int = 2;
 pub const SIGEV_THREAD_ID: c_int = 4;
-const enum_unnamed_36 = c_uint;
-pub const __sighandler_t = ?fn (c_int) callconv(.C) void;
+const enum_unnamed_38 = c_uint;
+pub const __sighandler_t = ?*const fn (c_int) callconv(.C) void;
 pub extern fn __sysv_signal(__sig: c_int, __handler: __sighandler_t) __sighandler_t;
 pub extern fn signal(__sig: c_int, __handler: __sighandler_t) __sighandler_t;
 pub extern fn kill(__pid: __pid_t, __sig: c_int) c_int;
@@ -1563,15 +1680,15 @@ pub extern fn sigfillset(__set: [*c]sigset_t) c_int;
 pub extern fn sigaddset(__set: [*c]sigset_t, __signo: c_int) c_int;
 pub extern fn sigdelset(__set: [*c]sigset_t, __signo: c_int) c_int;
 pub extern fn sigismember(__set: [*c]const sigset_t, __signo: c_int) c_int;
-const union_unnamed_37 = extern union {
+const union_unnamed_39 = extern union {
     sa_handler: __sighandler_t,
-    sa_sigaction: ?fn (c_int, [*c]siginfo_t, ?*anyopaque) callconv(.C) void,
+    sa_sigaction: ?*const fn (c_int, [*c]siginfo_t, ?*anyopaque) callconv(.C) void,
 };
 pub const struct_sigaction = extern struct {
-    __sigaction_handler: union_unnamed_37,
+    __sigaction_handler: union_unnamed_39,
     sa_mask: __sigset_t,
     sa_flags: c_int,
-    sa_restorer: ?fn () callconv(.C) void,
+    sa_restorer: ?*const fn () callconv(.C) void,
 };
 pub extern fn sigprocmask(__how: c_int, noalias __set: [*c]const sigset_t, noalias __oset: [*c]sigset_t) c_int;
 pub extern fn sigsuspend(__set: [*c]const sigset_t) c_int;
@@ -1581,6 +1698,8 @@ pub extern fn sigwait(noalias __set: [*c]const sigset_t, noalias __sig: [*c]c_in
 pub extern fn sigwaitinfo(noalias __set: [*c]const sigset_t, noalias __info: [*c]siginfo_t) c_int;
 pub extern fn sigtimedwait(noalias __set: [*c]const sigset_t, noalias __info: [*c]siginfo_t, noalias __timeout: [*c]const struct_timespec) c_int;
 pub extern fn sigqueue(__pid: __pid_t, __sig: c_int, __val: union_sigval) c_int;
+pub extern const _sys_siglist: [65][*c]const u8;
+pub extern const sys_siglist: [65][*c]const u8;
 pub const struct__fpx_sw_bytes = extern struct {
     magic1: __uint32_t,
     extended_size: __uint32_t,
@@ -1613,7 +1732,7 @@ pub const struct__fpstate = extern struct {
     _xmm: [16]struct__xmmreg,
     __glibc_reserved1: [24]__uint32_t,
 };
-const union_unnamed_38 = extern union {
+const union_unnamed_40 = extern union {
     fpstate: [*c]struct__fpstate,
     __fpstate_word: __uint64_t,
 };
@@ -1644,7 +1763,7 @@ pub const struct_sigcontext = extern struct {
     trapno: __uint64_t,
     oldmask: __uint64_t,
     cr2: __uint64_t,
-    unnamed_0: union_unnamed_38,
+    unnamed_0: union_unnamed_40,
     __reserved1: [8]__uint64_t,
 };
 pub const struct__xsave_hdr = extern struct {
@@ -1708,7 +1827,7 @@ pub const ucontext_t = struct_ucontext_t;
 pub extern fn siginterrupt(__sig: c_int, __interrupt: c_int) c_int;
 pub const SS_ONSTACK: c_int = 1;
 pub const SS_DISABLE: c_int = 2;
-const enum_unnamed_39 = c_uint;
+const enum_unnamed_41 = c_uint;
 pub extern fn sigaltstack(noalias __ss: [*c]const stack_t, noalias __oss: [*c]stack_t) c_int;
 pub const struct_sigstack = extern struct {
     ss_sp: ?*anyopaque,
@@ -1775,7 +1894,7 @@ pub var poller: ?*struct_iwn_poller = @import("std").mem.zeroes(?*struct_iwn_pol
 pub var ctx: [*c]struct_iwn_wf_ctx = @import("std").mem.zeroes([*c]struct_iwn_wf_ctx);
 pub fn _on_signal(arg_signo: c_int) callconv(.C) void {
     var signo = arg_signo;
-    _ = signo;
+    _ = @TypeOf(signo);
     _ = fprintf(stderr, "\nExiting...\n");
     iwn_poller_shutdown_request(poller);
 }
@@ -1783,18 +1902,22 @@ pub fn _handle_echo(arg_req: [*c]struct_iwn_wf_req, arg_user_data: ?*anyopaque) 
     var req = arg_req;
     var user_data = arg_user_data;
     _ = fprintf(stderr, "Echo handler called\n");
-    _ = iwn_http_response_printf(req.*.http, @as(c_int, 200), "text/plain", "%.*s\n%s\n", @bitCast(c_int, @truncate(c_uint, req.*.body_len)), req.*.body, @ptrCast([*c]u8, @alignCast(@import("std").meta.alignment(u8), user_data)));
+    _ = iwn_http_response_printf(req.*.http, @as(c_int, 200), "text/plain", "%.*s\n%s\n", @bitCast(c_int, @truncate(c_uint, req.*.body_len)), req.*.body, @ptrCast([*c]u8, @alignCast(@import("std").meta.alignment([*c]u8), user_data)));
     return 1;
-} // ../../../build/include/iowow/basedefs.h:121:66: warning: TODO implement translation of stmt class GotoStmtClass
+} // ../../../build/include/iowow/basedefs.h:147:66: warning: TODO implement translation of stmt class GotoStmtClass
 // echo_http_server.c:32:5: warning: unable to translate function, demoted to extern
 pub extern fn main(arg_argc: c_int, arg_argv: [*c][*c]u8) c_int;
-pub const __INTMAX_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `L`"); // (no file):67:9
-pub const __UINTMAX_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `UL`"); // (no file):73:9
-pub const __INT64_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `L`"); // (no file):164:9
-pub const __UINT32_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `U`"); // (no file):186:9
-pub const __UINT64_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `UL`"); // (no file):194:9
-pub const __seg_gs = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // (no file):315:9
-pub const __seg_fs = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // (no file):316:9
+pub const __INTMAX_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `L`"); // (no file):80:9
+pub const __UINTMAX_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `UL`"); // (no file):86:9
+pub const __FLT16_DENORM_MIN__ = @compileError("unable to translate C expr: unexpected token 'IntegerLiteral'"); // (no file):109:9
+pub const __FLT16_EPSILON__ = @compileError("unable to translate C expr: unexpected token 'IntegerLiteral'"); // (no file):113:9
+pub const __FLT16_MAX__ = @compileError("unable to translate C expr: unexpected token 'IntegerLiteral'"); // (no file):119:9
+pub const __FLT16_MIN__ = @compileError("unable to translate C expr: unexpected token 'IntegerLiteral'"); // (no file):122:9
+pub const __INT64_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `L`"); // (no file):183:9
+pub const __UINT32_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `U`"); // (no file):205:9
+pub const __UINT64_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `UL`"); // (no file):213:9
+pub const __seg_gs = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // (no file):343:9
+pub const __seg_fs = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // (no file):344:9
 pub const IW_STR = @compileError("unable to translate C expr: unexpected token '#'"); // ../../../build/include/iowow/basedefs.h:45:9
 pub const IW_MAX = @compileError("unable to translate macro: undefined identifier `__typeof__`"); // ../../../build/include/iowow/basedefs.h:47:9
 pub const IW_MIN = @compileError("unable to translate macro: undefined identifier `__typeof__`"); // ../../../build/include/iowow/basedefs.h:48:9
@@ -1803,182 +1926,177 @@ pub const IW_INLINE = @compileError("unable to translate macro: undefined identi
 pub const IW_SOFT_INLINE = @compileError("unable to translate C expr: unexpected token 'static'"); // ../../../build/include/iowow/basedefs.h:75:9
 pub const WUR = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // ../../../build/include/iowow/basedefs.h:78:9
 pub const IW_ALLOC = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // ../../../build/include/iowow/basedefs.h:79:9
-pub const IW_ARR_STATIC = @compileError("unable to translate C expr: unexpected token 'static'"); // ../../../build/include/iowow/basedefs.h:85:9
-pub const IW_ARR_CONST = @compileError("unable to translate C expr: unexpected token 'const'"); // ../../../build/include/iowow/basedefs.h:86:9
-pub const ZGO = @compileError("unable to translate macro: undefined identifier `__typeof__`"); // ../../../build/include/iowow/basedefs.h:110:9
-pub const ZRET = @compileError("unable to translate macro: undefined identifier `__typeof__`"); // ../../../build/include/iowow/basedefs.h:115:9
-pub const RCGO = @compileError("unable to translate C expr: unexpected token 'if'"); // ../../../build/include/iowow/basedefs.h:121:9
-pub const RCIF = @compileError("unable to translate C expr: unexpected token 'if'"); // ../../../build/include/iowow/basedefs.h:126:9
-pub const RCHECK = @compileError("unable to translate C expr: unexpected token '='"); // ../../../build/include/iowow/basedefs.h:132:9
-pub const RCGA = @compileError("unable to translate macro: undefined identifier `rc`"); // ../../../build/include/iowow/basedefs.h:139:9
-pub const RCN = @compileError("unable to translate macro: undefined identifier `rc`"); // ../../../build/include/iowow/basedefs.h:155:9
-pub const RCT = @compileError("unable to translate macro: undefined identifier `__typeof__`"); // ../../../build/include/iowow/basedefs.h:163:9
-pub const RCRET = @compileError("unable to translate C expr: unexpected token 'if'"); // ../../../build/include/iowow/basedefs.h:173:9
-pub const RCR = @compileError("unable to translate macro: undefined identifier `rc__`"); // ../../../build/include/iowow/basedefs.h:178:9
-pub const RCBREAK = @compileError("unable to translate C expr: unexpected token 'if'"); // ../../../build/include/iowow/basedefs.h:182:9
-pub const RCONT = @compileError("unable to translate C expr: unexpected token 'if'"); // ../../../build/include/iowow/basedefs.h:188:9
-pub const IW_DODEBUG = @compileError("unable to translate C expr: unexpected token '{'"); // ../../../build/include/iowow/basedefs.h:220:9
-pub const IW_WRITEBV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:269:9
-pub const IW_WRITESV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:275:9
-pub const IW_WRITELV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:282:9
-pub const IW_WRITELLV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:289:9
-pub const IW_READBV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:296:9
-pub const IW_READSV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:303:9
-pub const IW_READLV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:310:9
-pub const IW_READLLV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:317:9
-pub const __GLIBC_USE = @compileError("unable to translate macro: undefined identifier `__GLIBC_USE_`"); // /usr/include/features.h:186:9
-pub const __glibc_has_attribute = @compileError("unable to translate macro: undefined identifier `__has_attribute`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:44:10
-pub const __glibc_has_builtin = @compileError("unable to translate macro: undefined identifier `__has_builtin`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:49:10
-pub const __glibc_has_extension = @compileError("unable to translate macro: undefined identifier `__has_extension`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:54:10
-pub const __THROW = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:78:11
-pub const __THROWNL = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:79:11
-pub const __NTH = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:80:11
-pub const __NTHNL = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:81:11
-pub const __CONCAT = @compileError("unable to translate C expr: unexpected token '##'"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:123:9
-pub const __STRING = @compileError("unable to translate C expr: unexpected token '#'"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:124:9
-pub const __warnattr = @compileError("unable to translate C expr: unexpected token 'Eof'"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:158:10
-pub const __errordecl = @compileError("unable to translate C expr: unexpected token 'extern'"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:159:10
-pub const __flexarr = @compileError("unable to translate C expr: unexpected token '['"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:167:10
-pub const __REDIRECT = @compileError("unable to translate macro: undefined identifier `__asm__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:198:10
-pub const __REDIRECT_NTH = @compileError("unable to translate macro: undefined identifier `__asm__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:205:11
-pub const __REDIRECT_NTHNL = @compileError("unable to translate macro: undefined identifier `__asm__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:207:11
-pub const __ASMNAME2 = @compileError("unable to translate C expr: unexpected token 'Identifier'"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:211:10
-pub const __attribute_malloc__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:232:10
-pub const __attribute_alloc_size__ = @compileError("unable to translate C expr: unexpected token 'Eof'"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:243:10
-pub const __attribute_pure__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:250:10
-pub const __attribute_const__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:257:10
-pub const __attribute_maybe_unused__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:263:10
-pub const __attribute_used__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:272:10
-pub const __attribute_noinline__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:273:10
-pub const __attribute_deprecated__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:281:10
-pub const __attribute_deprecated_msg__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:291:10
-pub const __attribute_format_arg__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:304:10
-pub const __attribute_format_strfmon__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:314:10
-pub const __nonnull = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:324:11
-pub const __returns_nonnull = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:337:10
-pub const __attribute_warn_unused_result__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:346:10
-pub const __always_inline = @compileError("unable to translate macro: undefined identifier `__inline`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:364:10
-pub const __attribute_artificial__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:373:10
-pub const __extern_inline = @compileError("unable to translate macro: undefined identifier `__inline`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:391:11
-pub const __extern_always_inline = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:392:11
-pub const __restrict_arr = @compileError("unable to translate macro: undefined identifier `__restrict`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:435:10
-pub const __attribute_copy__ = @compileError("unable to translate C expr: unexpected token 'Eof'"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:484:10
-pub const __LDBL_REDIR2_DECL = @compileError("unable to translate C expr: unexpected token 'Eof'"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:560:10
-pub const __LDBL_REDIR_DECL = @compileError("unable to translate C expr: unexpected token 'Eof'"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:561:10
-pub const __glibc_macro_warning1 = @compileError("unable to translate macro: undefined identifier `_Pragma`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:575:10
-pub const __glibc_macro_warning = @compileError("unable to translate macro: undefined identifier `GCC`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:576:10
-pub const __attr_access = @compileError("unable to translate C expr: unexpected token 'Eof'"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:612:11
-pub const __attr_access_none = @compileError("unable to translate C expr: unexpected token 'Eof'"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:613:11
-pub const __attr_dealloc = @compileError("unable to translate C expr: unexpected token 'Eof'"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:623:10
-pub const __attribute_returns_twice__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/generic-glibc/sys/cdefs.h:630:10
-pub const __STD_TYPE = @compileError("unable to translate C expr: unexpected token 'typedef'"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types.h:137:10
-pub const __FSID_T_TYPE = @compileError("unable to translate macro: undefined identifier `__val`"); // /home/linux/zig/lib/libc/include/x86_64-linux-gnu/bits/typesizes.h:73:9
-pub const __INT64_C = @compileError("unable to translate macro: undefined identifier `L`"); // /usr/include/stdint.h:106:11
-pub const __UINT64_C = @compileError("unable to translate macro: undefined identifier `UL`"); // /usr/include/stdint.h:107:11
-pub const INT64_C = @compileError("unable to translate macro: undefined identifier `L`"); // /usr/include/stdint.h:252:11
-pub const UINT32_C = @compileError("unable to translate macro: undefined identifier `U`"); // /usr/include/stdint.h:260:10
-pub const UINT64_C = @compileError("unable to translate macro: undefined identifier `UL`"); // /usr/include/stdint.h:262:11
-pub const INTMAX_C = @compileError("unable to translate macro: undefined identifier `L`"); // /usr/include/stdint.h:269:11
-pub const UINTMAX_C = @compileError("unable to translate macro: undefined identifier `UL`"); // /usr/include/stdint.h:270:11
+pub const IW_NORET = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // ../../../build/include/iowow/basedefs.h:80:9
+pub const IW_CONSTRUCTOR = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // ../../../build/include/iowow/basedefs.h:87:9
+pub const IW_DESTRUCTOR = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // ../../../build/include/iowow/basedefs.h:88:9
+pub const IW_CLEANUP = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // ../../../build/include/iowow/basedefs.h:90:9
+pub const IW_CLEANUP_FUNC = @compileError("unable to translate macro: undefined identifier `_cc`"); // ../../../build/include/iowow/basedefs.h:92:9
+pub const IW_CLEANUP_DESTROY_FUNC = @compileError("unable to translate macro: undefined identifier `_cc`"); // ../../../build/include/iowow/basedefs.h:99:9
+pub const IW_SENTINEL = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // ../../../build/include/iowow/basedefs.h:107:9
+pub const IW_ARR_STATIC = @compileError("unable to translate C expr: unexpected token 'static'"); // ../../../build/include/iowow/basedefs.h:109:9
+pub const IW_ARR_CONST = @compileError("unable to translate C expr: unexpected token 'const'"); // ../../../build/include/iowow/basedefs.h:110:9
+pub const ZGO = @compileError("unable to translate macro: undefined identifier `__typeof__`"); // ../../../build/include/iowow/basedefs.h:136:9
+pub const ZRET = @compileError("unable to translate macro: undefined identifier `__typeof__`"); // ../../../build/include/iowow/basedefs.h:141:9
+pub const RCGO = @compileError("unable to translate C expr: unexpected token 'if'"); // ../../../build/include/iowow/basedefs.h:147:9
+pub const RCIF = @compileError("unable to translate C expr: unexpected token 'if'"); // ../../../build/include/iowow/basedefs.h:152:9
+pub const RCHECK = @compileError("unable to translate C expr: unexpected token '='"); // ../../../build/include/iowow/basedefs.h:158:9
+pub const RCGA = @compileError("unable to translate macro: undefined identifier `rc`"); // ../../../build/include/iowow/basedefs.h:165:9
+pub const RCN = @compileError("unable to translate macro: undefined identifier `rc`"); // ../../../build/include/iowow/basedefs.h:181:9
+pub const RCT = @compileError("unable to translate macro: undefined identifier `__typeof__`"); // ../../../build/include/iowow/basedefs.h:189:9
+pub const RCRET = @compileError("unable to translate C expr: unexpected token 'if'"); // ../../../build/include/iowow/basedefs.h:199:9
+pub const RCR = @compileError("unable to translate macro: undefined identifier `rc__`"); // ../../../build/include/iowow/basedefs.h:204:9
+pub const RCBREAK = @compileError("unable to translate C expr: unexpected token 'if'"); // ../../../build/include/iowow/basedefs.h:208:9
+pub const RCONT = @compileError("unable to translate C expr: unexpected token 'if'"); // ../../../build/include/iowow/basedefs.h:214:9
+pub const IW_DODEBUG = @compileError("unable to translate C expr: unexpected token '{'"); // ../../../build/include/iowow/basedefs.h:244:9
+pub const IW_WRITEBV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:293:9
+pub const IW_WRITESV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:299:9
+pub const IW_WRITELV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:306:9
+pub const IW_WRITELLV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:313:9
+pub const IW_READBV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:320:9
+pub const IW_READSV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:327:9
+pub const IW_READLV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:334:9
+pub const IW_READLLV = @compileError("unable to translate macro: undefined identifier `static_assert`"); // ../../../build/include/iowow/basedefs.h:341:9
+pub const __GLIBC_USE = @compileError("unable to translate macro: undefined identifier `__GLIBC_USE_`"); // /usr/include/features.h:179:9
+pub const __THROW = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:55:11
+pub const __THROWNL = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:56:11
+pub const __NTH = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:57:11
+pub const __NTHNL = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:58:11
+pub const __glibc_clang_has_extension = @compileError("unable to translate macro: undefined identifier `__has_extension`"); // /usr/include/sys/cdefs.h:92:10
+pub const __CONCAT = @compileError("unable to translate C expr: unexpected token '##'"); // /usr/include/sys/cdefs.h:105:9
+pub const __STRING = @compileError("unable to translate C expr: unexpected token '#'"); // /usr/include/sys/cdefs.h:106:9
+pub const __warndecl = @compileError("unable to translate C expr: unexpected token 'extern'"); // /usr/include/sys/cdefs.h:133:10
+pub const __warnattr = @compileError("unable to translate C expr: unexpected token 'Eof'"); // /usr/include/sys/cdefs.h:134:10
+pub const __errordecl = @compileError("unable to translate C expr: unexpected token 'extern'"); // /usr/include/sys/cdefs.h:135:10
+pub const __flexarr = @compileError("unable to translate C expr: unexpected token '['"); // /usr/include/sys/cdefs.h:143:10
+pub const __REDIRECT = @compileError("unable to translate macro: undefined identifier `__asm__`"); // /usr/include/sys/cdefs.h:174:10
+pub const __REDIRECT_NTH = @compileError("unable to translate macro: undefined identifier `__asm__`"); // /usr/include/sys/cdefs.h:181:11
+pub const __REDIRECT_NTHNL = @compileError("unable to translate macro: undefined identifier `__asm__`"); // /usr/include/sys/cdefs.h:183:11
+pub const __ASMNAME2 = @compileError("unable to translate C expr: unexpected token 'Identifier'"); // /usr/include/sys/cdefs.h:187:10
+pub const __attribute_malloc__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:208:10
+pub const __attribute_alloc_size__ = @compileError("unable to translate C expr: unexpected token 'Eof'"); // /usr/include/sys/cdefs.h:219:10
+pub const __attribute_pure__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:226:10
+pub const __attribute_const__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:233:10
+pub const __attribute_used__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:242:10
+pub const __attribute_noinline__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:243:10
+pub const __attribute_deprecated__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:251:10
+pub const __attribute_deprecated_msg__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:261:10
+pub const __attribute_format_arg__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:274:10
+pub const __attribute_format_strfmon__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:284:10
+pub const __nonnull = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:293:10
+pub const __attribute_warn_unused_result__ = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:301:10
+pub const __always_inline = @compileError("unable to translate macro: undefined identifier `__inline`"); // /usr/include/sys/cdefs.h:319:10
+pub const __extern_inline = @compileError("unable to translate macro: undefined identifier `__inline`"); // /usr/include/sys/cdefs.h:346:11
+pub const __extern_always_inline = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/sys/cdefs.h:347:11
+pub const __restrict_arr = @compileError("unable to translate macro: undefined identifier `__restrict`"); // /usr/include/sys/cdefs.h:387:10
+pub const __glibc_has_attribute = @compileError("unable to translate macro: undefined identifier `__has_attribute`"); // /usr/include/sys/cdefs.h:410:10
+pub const __attribute_copy__ = @compileError("unable to translate C expr: unexpected token 'Eof'"); // /usr/include/sys/cdefs.h:441:10
+pub const __LDBL_REDIR_DECL = @compileError("unable to translate C expr: unexpected token 'Eof'"); // /usr/include/sys/cdefs.h:479:10
+pub const __glibc_macro_warning1 = @compileError("unable to translate macro: undefined identifier `_Pragma`"); // /usr/include/sys/cdefs.h:493:10
+pub const __glibc_macro_warning = @compileError("unable to translate macro: undefined identifier `GCC`"); // /usr/include/sys/cdefs.h:494:10
+pub const __STD_TYPE = @compileError("unable to translate C expr: unexpected token 'typedef'"); // /usr/include/bits/types.h:137:10
+pub const __FSID_T_TYPE = @compileError("unable to translate macro: undefined identifier `__val`"); // /usr/include/bits/typesizes.h:72:9
 pub const offsetof = @compileError("unable to translate macro: undefined identifier `__builtin_offsetof`"); // /home/linux/zig/lib/include/stddef.h:104:9
-pub const __FD_ZERO = @compileError("unable to translate macro: undefined identifier `__i`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/select.h:25:9
-pub const __FD_SET = @compileError("unable to translate C expr: expected ')' instead got '|='"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/select.h:32:9
-pub const __FD_CLR = @compileError("unable to translate C expr: expected ')' instead got '&='"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/select.h:34:9
-pub const __PTHREAD_MUTEX_INITIALIZER = @compileError("unable to translate C expr: unexpected token '{'"); // /home/linux/zig/lib/libc/include/x86_64-linux-gnu/bits/struct_mutex.h:56:10
-pub const __PTHREAD_RWLOCK_ELISION_EXTRA = @compileError("unable to translate C expr: unexpected token '{'"); // /home/linux/zig/lib/libc/include/x86_64-linux-gnu/bits/struct_rwlock.h:40:11
-pub const __ONCE_FLAG_INIT = @compileError("unable to translate C expr: unexpected token '{'"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/thread-shared-types.h:127:9
-pub const IW_DEPRECATED = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // ../../../build/include/iowow/basedefs.h:345:9
-pub const __CPU_ZERO_S = @compileError("unable to translate C expr: unexpected token 'do'"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/cpu-set.h:46:10
-pub const __CPU_SET_S = @compileError("unable to translate macro: undefined identifier `__extension__`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/cpu-set.h:58:9
-pub const __CPU_CLR_S = @compileError("unable to translate macro: undefined identifier `__extension__`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/cpu-set.h:65:9
-pub const __CPU_ISSET_S = @compileError("unable to translate macro: undefined identifier `__extension__`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/cpu-set.h:72:9
-pub const __CPU_EQUAL_S = @compileError("unable to translate macro: undefined identifier `__builtin_memcmp`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/cpu-set.h:84:10
-pub const __CPU_OP_S = @compileError("unable to translate macro: undefined identifier `__extension__`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/cpu-set.h:99:9
-pub const PTHREAD_MUTEX_INITIALIZER = @compileError("unable to translate C expr: unexpected token '{'"); // /usr/include/pthread.h:90:9
-pub const PTHREAD_RWLOCK_INITIALIZER = @compileError("unable to translate C expr: unexpected token '{'"); // /usr/include/pthread.h:114:10
-pub const PTHREAD_COND_INITIALIZER = @compileError("unable to translate C expr: unexpected token '{'"); // /usr/include/pthread.h:155:9
-pub const pthread_cleanup_push = @compileError("unable to translate macro: undefined identifier `__cancel_buf`"); // /usr/include/pthread.h:681:10
-pub const pthread_cleanup_pop = @compileError("unable to translate macro: undefined identifier `__cancel_buf`"); // /usr/include/pthread.h:702:10
-pub const __EPOLL_PACKED = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /home/linux/zig/lib/libc/include/x86_64-linux-gnu/bits/epoll.h:29:9
+pub const __FD_ZERO = @compileError("unable to translate macro: undefined identifier `__d0`"); // /usr/include/bits/select.h:33:10
+pub const __FD_SET = @compileError("unable to translate C expr: expected ')' instead got '|='"); // /usr/include/bits/select.h:58:9
+pub const __FD_CLR = @compileError("unable to translate C expr: expected ')' instead got '&='"); // /usr/include/bits/select.h:60:9
+pub const __PTHREAD_MUTEX_INITIALIZER = @compileError("unable to translate C expr: unexpected token '{'"); // /usr/include/bits/struct_mutex.h:56:10
+pub const __PTHREAD_RWLOCK_ELISION_EXTRA = @compileError("unable to translate C expr: unexpected token '{'"); // /usr/include/bits/struct_rwlock.h:40:11
+pub const IW_DEPRECATED = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // ../../../build/include/iowow/basedefs.h:369:9
+pub const __CPU_ZERO_S = @compileError("unable to translate C expr: unexpected token 'do'"); // /usr/include/bits/cpu-set.h:46:10
+pub const __CPU_SET_S = @compileError("unable to translate macro: undefined identifier `__extension__`"); // /usr/include/bits/cpu-set.h:58:9
+pub const __CPU_CLR_S = @compileError("unable to translate macro: undefined identifier `__extension__`"); // /usr/include/bits/cpu-set.h:65:9
+pub const __CPU_ISSET_S = @compileError("unable to translate macro: undefined identifier `__extension__`"); // /usr/include/bits/cpu-set.h:72:9
+pub const __CPU_EQUAL_S = @compileError("unable to translate macro: undefined identifier `__builtin_memcmp`"); // /usr/include/bits/cpu-set.h:84:10
+pub const __CPU_OP_S = @compileError("unable to translate macro: undefined identifier `__extension__`"); // /usr/include/bits/cpu-set.h:99:9
+pub const __sched_priority = @compileError("unable to translate macro: undefined identifier `sched_priority`"); // /usr/include/sched.h:48:9
+pub const PTHREAD_MUTEX_INITIALIZER = @compileError("unable to translate C expr: unexpected token '{'"); // /usr/include/pthread.h:86:9
+pub const PTHREAD_RWLOCK_INITIALIZER = @compileError("unable to translate C expr: unexpected token '{'"); // /usr/include/pthread.h:110:10
+pub const PTHREAD_COND_INITIALIZER = @compileError("unable to translate C expr: unexpected token '{'"); // /usr/include/pthread.h:151:9
+pub const pthread_cleanup_push = @compileError("unable to translate macro: undefined identifier `__cancel_buf`"); // /usr/include/pthread.h:640:10
+pub const pthread_cleanup_pop = @compileError("unable to translate macro: undefined identifier `__cancel_buf`"); // /usr/include/pthread.h:661:10
+pub const __EPOLL_PACKED = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // /usr/include/bits/epoll.h:29:9
 pub const va_start = @compileError("unable to translate macro: undefined identifier `__builtin_va_start`"); // /home/linux/zig/lib/include/stdarg.h:17:9
 pub const va_end = @compileError("unable to translate macro: undefined identifier `__builtin_va_end`"); // /home/linux/zig/lib/include/stdarg.h:18:9
 pub const va_arg = @compileError("unable to translate macro: undefined identifier `__builtin_va_arg`"); // /home/linux/zig/lib/include/stdarg.h:19:9
 pub const __va_copy = @compileError("unable to translate macro: undefined identifier `__builtin_va_copy`"); // /home/linux/zig/lib/include/stdarg.h:24:9
 pub const va_copy = @compileError("unable to translate macro: undefined identifier `__builtin_va_copy`"); // /home/linux/zig/lib/include/stdarg.h:27:9
-pub const __getc_unlocked_body = @compileError("TODO postfix inc/dec expr"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/struct_FILE.h:102:9
-pub const __putc_unlocked_body = @compileError("TODO postfix inc/dec expr"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/struct_FILE.h:106:9
-pub const __f32 = @compileError("unable to translate macro: undefined identifier `f`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:91:12
-pub const __f64x = @compileError("unable to translate macro: undefined identifier `l`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:120:13
-pub const __CFLOAT32 = @compileError("unable to translate: TODO _Complex"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:149:12
-pub const __CFLOAT64 = @compileError("unable to translate: TODO _Complex"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:160:13
-pub const __CFLOAT32X = @compileError("unable to translate: TODO _Complex"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:169:12
-pub const __CFLOAT64X = @compileError("unable to translate: TODO _Complex"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:178:13
-pub const __builtin_nansf32 = @compileError("unable to translate macro: undefined identifier `__builtin_nansf`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:221:12
-pub const __builtin_huge_valf64 = @compileError("unable to translate macro: undefined identifier `__builtin_huge_val`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:255:13
-pub const __builtin_inff64 = @compileError("unable to translate macro: undefined identifier `__builtin_inf`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:256:13
-pub const __builtin_nanf64 = @compileError("unable to translate macro: undefined identifier `__builtin_nan`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:257:13
-pub const __builtin_nansf64 = @compileError("unable to translate macro: undefined identifier `__builtin_nans`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:258:13
-pub const __builtin_huge_valf32x = @compileError("unable to translate macro: undefined identifier `__builtin_huge_val`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:272:12
-pub const __builtin_inff32x = @compileError("unable to translate macro: undefined identifier `__builtin_inf`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:273:12
-pub const __builtin_nanf32x = @compileError("unable to translate macro: undefined identifier `__builtin_nan`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:274:12
-pub const __builtin_nansf32x = @compileError("unable to translate macro: undefined identifier `__builtin_nans`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:275:12
-pub const __builtin_huge_valf64x = @compileError("unable to translate macro: undefined identifier `__builtin_huge_vall`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:289:13
-pub const __builtin_inff64x = @compileError("unable to translate macro: undefined identifier `__builtin_infl`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:290:13
-pub const __builtin_nanf64x = @compileError("unable to translate macro: undefined identifier `__builtin_nanl`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:291:13
-pub const __builtin_nansf64x = @compileError("unable to translate macro: undefined identifier `__builtin_nansl`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/floatn-common.h:292:13
-pub const iwlog_debug = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:254:9
-pub const iwlog_info = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:259:9
-pub const iwlog_warn = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:261:9
-pub const iwlog_error = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:263:9
-pub const iwlog_debug2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:267:9
-pub const iwlog_info2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:272:9
-pub const iwlog_warn2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:273:9
-pub const iwlog_error2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:274:9
-pub const iwlog_ecode_debug = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:278:9
-pub const iwlog_ecode_info = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:283:9
-pub const iwlog_ecode_warn = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:285:9
-pub const iwlog_ecode_error = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:287:9
-pub const iwlog_ecode_debug2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:291:9
-pub const iwlog_ecode_info2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:296:9
-pub const iwlog_ecode_warn2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:298:9
-pub const iwlog_ecode_error2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:300:9
-pub const iwlog_ecode_debug3 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:304:9
-pub const iwlog_ecode_info3 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:309:9
-pub const iwlog_ecode_warn3 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:310:9
-pub const iwlog_ecode_error3 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:312:9
-pub const IWRC = @compileError("unable to translate macro: undefined identifier `__iwrc`"); // ../../../build/include/iowow/iwlog.h:315:9
-pub const IWRC2 = @compileError("unable to translate macro: undefined identifier `__iwrc`"); // ../../../build/include/iowow/iwlog.h:326:9
-pub const IWRC3 = @compileError("unable to translate macro: undefined identifier `__iwrc`"); // ../../../build/include/iowow/iwlog.h:334:9
-pub const si_pid = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:128:9
-pub const si_uid = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:129:9
-pub const si_timerid = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:130:9
-pub const si_overrun = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:131:9
-pub const si_status = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:132:9
-pub const si_utime = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:133:9
-pub const si_stime = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:134:9
-pub const si_value = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:135:9
-pub const si_int = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:136:9
-pub const si_ptr = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:137:9
-pub const si_addr = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:138:9
-pub const si_addr_lsb = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:139:9
-pub const si_lower = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:140:9
-pub const si_upper = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:141:9
-pub const si_pkey = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:142:9
-pub const si_band = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:143:9
-pub const si_fd = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:144:9
-pub const si_call_addr = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:146:10
-pub const si_syscall = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:147:10
-pub const si_arch = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/siginfo_t.h:148:10
-pub const sigev_notify_function = @compileError("unable to translate macro: undefined identifier `_sigev_un`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/sigevent_t.h:45:9
-pub const sigev_notify_attributes = @compileError("unable to translate macro: undefined identifier `_sigev_un`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/types/sigevent_t.h:46:9
-pub const sa_handler = @compileError("unable to translate macro: undefined identifier `__sigaction_handler`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/sigaction.h:39:10
-pub const sa_sigaction = @compileError("unable to translate macro: undefined identifier `__sigaction_handler`"); // /home/linux/zig/lib/libc/include/generic-glibc/bits/sigaction.h:40:10
+pub const __getc_unlocked_body = @compileError("TODO postfix inc/dec expr"); // /usr/include/bits/types/struct_FILE.h:102:9
+pub const __putc_unlocked_body = @compileError("TODO postfix inc/dec expr"); // /usr/include/bits/types/struct_FILE.h:106:9
+pub const iwlog_debug = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:255:9
+pub const iwlog_verbose = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:260:9
+pub const iwlog_info = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:262:9
+pub const iwlog_warn = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:264:9
+pub const iwlog_error = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:266:9
+pub const iwlog_debug2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:270:9
+pub const iwlog_verbose2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:275:9
+pub const iwlog_info2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:276:9
+pub const iwlog_warn2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:277:9
+pub const iwlog_error2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:278:9
+pub const iwlog_ecode_debug = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:282:9
+pub const iwlog_ecode_verbose = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:287:9
+pub const iwlog_ecode_info = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:289:9
+pub const iwlog_ecode_warn = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:291:9
+pub const iwlog_ecode_error = @compileError("unable to translate C expr: expected ')' instead got '...'"); // ../../../build/include/iowow/iwlog.h:293:9
+pub const iwlog_ecode_debug2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:297:9
+pub const iwlog_ecode_verbose2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:302:9
+pub const iwlog_ecode_info2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:304:9
+pub const iwlog_ecode_warn2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:306:9
+pub const iwlog_ecode_error2 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:308:9
+pub const iwlog_ecode_debug3 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:312:9
+pub const iwlog_ecode_verbose3 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:317:9
+pub const iwlog_ecode_info3 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:318:9
+pub const iwlog_ecode_warn3 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:319:9
+pub const iwlog_ecode_error3 = @compileError("unable to translate macro: undefined identifier `__FILE__`"); // ../../../build/include/iowow/iwlog.h:321:9
+pub const IWRC = @compileError("unable to translate macro: undefined identifier `__iwrc`"); // ../../../build/include/iowow/iwlog.h:324:9
+pub const IWRC2 = @compileError("unable to translate macro: undefined identifier `__iwrc`"); // ../../../build/include/iowow/iwlog.h:335:9
+pub const IWRC3 = @compileError("unable to translate macro: undefined identifier `__iwrc`"); // ../../../build/include/iowow/iwlog.h:343:9
+pub const __CFLOAT32 = @compileError("unable to translate: TODO _Complex"); // /usr/include/bits/floatn-common.h:149:12
+pub const __CFLOAT64 = @compileError("unable to translate: TODO _Complex"); // /usr/include/bits/floatn-common.h:160:13
+pub const __CFLOAT32X = @compileError("unable to translate: TODO _Complex"); // /usr/include/bits/floatn-common.h:169:12
+pub const __CFLOAT64X = @compileError("unable to translate: TODO _Complex"); // /usr/include/bits/floatn-common.h:178:13
+pub const __builtin_nansf32 = @compileError("unable to translate macro: undefined identifier `__builtin_nansf`"); // /usr/include/bits/floatn-common.h:221:12
+pub const __builtin_huge_valf64 = @compileError("unable to translate macro: undefined identifier `__builtin_huge_val`"); // /usr/include/bits/floatn-common.h:255:13
+pub const __builtin_inff64 = @compileError("unable to translate macro: undefined identifier `__builtin_inf`"); // /usr/include/bits/floatn-common.h:256:13
+pub const __builtin_nanf64 = @compileError("unable to translate macro: undefined identifier `__builtin_nan`"); // /usr/include/bits/floatn-common.h:257:13
+pub const __builtin_nansf64 = @compileError("unable to translate macro: undefined identifier `__builtin_nans`"); // /usr/include/bits/floatn-common.h:258:13
+pub const __builtin_huge_valf32x = @compileError("unable to translate macro: undefined identifier `__builtin_huge_val`"); // /usr/include/bits/floatn-common.h:272:12
+pub const __builtin_inff32x = @compileError("unable to translate macro: undefined identifier `__builtin_inf`"); // /usr/include/bits/floatn-common.h:273:12
+pub const __builtin_nanf32x = @compileError("unable to translate macro: undefined identifier `__builtin_nan`"); // /usr/include/bits/floatn-common.h:274:12
+pub const __builtin_nansf32x = @compileError("unable to translate macro: undefined identifier `__builtin_nans`"); // /usr/include/bits/floatn-common.h:275:12
+pub const __builtin_huge_valf64x = @compileError("unable to translate macro: undefined identifier `__builtin_huge_vall`"); // /usr/include/bits/floatn-common.h:289:13
+pub const __builtin_inff64x = @compileError("unable to translate macro: undefined identifier `__builtin_infl`"); // /usr/include/bits/floatn-common.h:290:13
+pub const __builtin_nanf64x = @compileError("unable to translate macro: undefined identifier `__builtin_nanl`"); // /usr/include/bits/floatn-common.h:291:13
+pub const __builtin_nansf64x = @compileError("unable to translate macro: undefined identifier `__builtin_nansl`"); // /usr/include/bits/floatn-common.h:292:13
+pub const si_pid = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:128:9
+pub const si_uid = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:129:9
+pub const si_timerid = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:130:9
+pub const si_overrun = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:131:9
+pub const si_status = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:132:9
+pub const si_utime = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:133:9
+pub const si_stime = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:134:9
+pub const si_value = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:135:9
+pub const si_int = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:136:9
+pub const si_ptr = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:137:9
+pub const si_addr = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:138:9
+pub const si_addr_lsb = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:139:9
+pub const si_lower = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:140:9
+pub const si_upper = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:141:9
+pub const si_pkey = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:142:9
+pub const si_band = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:143:9
+pub const si_fd = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:144:9
+pub const si_call_addr = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:146:10
+pub const si_syscall = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:147:10
+pub const si_arch = @compileError("unable to translate macro: undefined identifier `_sifields`"); // /usr/include/bits/types/siginfo_t.h:148:10
+pub const sigev_notify_function = @compileError("unable to translate macro: undefined identifier `_sigev_un`"); // /usr/include/bits/types/sigevent_t.h:45:9
+pub const sigev_notify_attributes = @compileError("unable to translate macro: undefined identifier `_sigev_un`"); // /usr/include/bits/types/sigevent_t.h:46:9
+pub const sa_handler = @compileError("unable to translate macro: undefined identifier `__sigaction_handler`"); // /usr/include/bits/sigaction.h:39:10
+pub const sa_sigaction = @compileError("unable to translate macro: undefined identifier `__sigaction_handler`"); // /usr/include/bits/sigaction.h:40:10
 pub const __llvm__ = @as(c_int, 1);
 pub const __clang__ = @as(c_int, 1);
-pub const __clang_major__ = @as(c_int, 13);
+pub const __clang_major__ = @as(c_int, 15);
 pub const __clang_minor__ = @as(c_int, 0);
-pub const __clang_patchlevel__ = @as(c_int, 1);
-pub const __clang_version__ = "13.0.1 (git@github.com:ziglang/zig-bootstrap.git 81f0e6c5b902ead84753490db4f0007d08df964a)";
+pub const __clang_patchlevel__ = @as(c_int, 0);
+pub const __clang_version__ = "15.0.0 (git@github.com:ziglang/zig-bootstrap.git 9be8396b715b10f64d8a94b2d0d9acb77126d8ca)";
 pub const __GNUC__ = @as(c_int, 4);
 pub const __GNUC_MINOR__ = @as(c_int, 2);
 pub const __GNUC_PATCHLEVEL__ = @as(c_int, 1);
@@ -1995,12 +2113,11 @@ pub const __OPENCL_MEMORY_SCOPE_DEVICE = @as(c_int, 2);
 pub const __OPENCL_MEMORY_SCOPE_ALL_SVM_DEVICES = @as(c_int, 3);
 pub const __OPENCL_MEMORY_SCOPE_SUB_GROUP = @as(c_int, 4);
 pub const __PRAGMA_REDEFINE_EXTNAME = @as(c_int, 1);
-pub const __VERSION__ = "Clang 13.0.1 (git@github.com:ziglang/zig-bootstrap.git 81f0e6c5b902ead84753490db4f0007d08df964a)";
+pub const __VERSION__ = "Clang 15.0.0 (git@github.com:ziglang/zig-bootstrap.git 9be8396b715b10f64d8a94b2d0d9acb77126d8ca)";
 pub const __OBJC_BOOL_IS_BOOL = @as(c_int, 0);
 pub const __CONSTANT_CFSTRINGS__ = @as(c_int, 1);
 pub const __clang_literal_encoding__ = "UTF-8";
 pub const __clang_wide_literal_encoding__ = "UTF-32";
-pub const __OPTIMIZE__ = @as(c_int, 1);
 pub const __ORDER_LITTLE_ENDIAN__ = @as(c_int, 1234);
 pub const __ORDER_BIG_ENDIAN__ = @as(c_int, 4321);
 pub const __ORDER_PDP_ENDIAN__ = @as(c_int, 3412);
@@ -2009,19 +2126,33 @@ pub const __LITTLE_ENDIAN__ = @as(c_int, 1);
 pub const _LP64 = @as(c_int, 1);
 pub const __LP64__ = @as(c_int, 1);
 pub const __CHAR_BIT__ = @as(c_int, 8);
+pub const __BOOL_WIDTH__ = @as(c_int, 8);
+pub const __SHRT_WIDTH__ = @as(c_int, 16);
+pub const __INT_WIDTH__ = @as(c_int, 32);
+pub const __LONG_WIDTH__ = @as(c_int, 64);
+pub const __LLONG_WIDTH__ = @as(c_int, 64);
+pub const __BITINT_MAXWIDTH__ = @as(c_int, 128);
 pub const __SCHAR_MAX__ = @as(c_int, 127);
 pub const __SHRT_MAX__ = @as(c_int, 32767);
 pub const __INT_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_int, 2147483647, .decimal);
 pub const __LONG_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_long, 9223372036854775807, .decimal);
 pub const __LONG_LONG_MAX__ = @as(c_longlong, 9223372036854775807);
 pub const __WCHAR_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_int, 2147483647, .decimal);
+pub const __WCHAR_WIDTH__ = @as(c_int, 32);
 pub const __WINT_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_uint, 4294967295, .decimal);
+pub const __WINT_WIDTH__ = @as(c_int, 32);
 pub const __INTMAX_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_long, 9223372036854775807, .decimal);
+pub const __INTMAX_WIDTH__ = @as(c_int, 64);
 pub const __SIZE_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_ulong, 18446744073709551615, .decimal);
+pub const __SIZE_WIDTH__ = @as(c_int, 64);
 pub const __UINTMAX_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_ulong, 18446744073709551615, .decimal);
+pub const __UINTMAX_WIDTH__ = @as(c_int, 64);
 pub const __PTRDIFF_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_long, 9223372036854775807, .decimal);
+pub const __PTRDIFF_WIDTH__ = @as(c_int, 64);
 pub const __INTPTR_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_long, 9223372036854775807, .decimal);
+pub const __INTPTR_WIDTH__ = @as(c_int, 64);
 pub const __UINTPTR_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_ulong, 18446744073709551615, .decimal);
+pub const __UINTPTR_WIDTH__ = @as(c_int, 64);
 pub const __SIZEOF_DOUBLE__ = @as(c_int, 8);
 pub const __SIZEOF_FLOAT__ = @as(c_int, 4);
 pub const __SIZEOF_INT__ = @as(c_int, 4);
@@ -2043,36 +2174,38 @@ pub const __UINTMAX_FMTo__ = "lo";
 pub const __UINTMAX_FMTu__ = "lu";
 pub const __UINTMAX_FMTx__ = "lx";
 pub const __UINTMAX_FMTX__ = "lX";
-pub const __INTMAX_WIDTH__ = @as(c_int, 64);
 pub const __PTRDIFF_TYPE__ = c_long;
 pub const __PTRDIFF_FMTd__ = "ld";
 pub const __PTRDIFF_FMTi__ = "li";
-pub const __PTRDIFF_WIDTH__ = @as(c_int, 64);
 pub const __INTPTR_TYPE__ = c_long;
 pub const __INTPTR_FMTd__ = "ld";
 pub const __INTPTR_FMTi__ = "li";
-pub const __INTPTR_WIDTH__ = @as(c_int, 64);
 pub const __SIZE_TYPE__ = c_ulong;
 pub const __SIZE_FMTo__ = "lo";
 pub const __SIZE_FMTu__ = "lu";
 pub const __SIZE_FMTx__ = "lx";
 pub const __SIZE_FMTX__ = "lX";
-pub const __SIZE_WIDTH__ = @as(c_int, 64);
 pub const __WCHAR_TYPE__ = c_int;
-pub const __WCHAR_WIDTH__ = @as(c_int, 32);
 pub const __WINT_TYPE__ = c_uint;
-pub const __WINT_WIDTH__ = @as(c_int, 32);
-pub const __SIG_ATOMIC_WIDTH__ = @as(c_int, 32);
 pub const __SIG_ATOMIC_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_int, 2147483647, .decimal);
+pub const __SIG_ATOMIC_WIDTH__ = @as(c_int, 32);
 pub const __CHAR16_TYPE__ = c_ushort;
 pub const __CHAR32_TYPE__ = c_uint;
-pub const __UINTMAX_WIDTH__ = @as(c_int, 64);
 pub const __UINTPTR_TYPE__ = c_ulong;
 pub const __UINTPTR_FMTo__ = "lo";
 pub const __UINTPTR_FMTu__ = "lu";
 pub const __UINTPTR_FMTx__ = "lx";
 pub const __UINTPTR_FMTX__ = "lX";
-pub const __UINTPTR_WIDTH__ = @as(c_int, 64);
+pub const __FLT16_HAS_DENORM__ = @as(c_int, 1);
+pub const __FLT16_DIG__ = @as(c_int, 3);
+pub const __FLT16_DECIMAL_DIG__ = @as(c_int, 5);
+pub const __FLT16_HAS_INFINITY__ = @as(c_int, 1);
+pub const __FLT16_HAS_QUIET_NAN__ = @as(c_int, 1);
+pub const __FLT16_MANT_DIG__ = @as(c_int, 11);
+pub const __FLT16_MAX_10_EXP__ = @as(c_int, 4);
+pub const __FLT16_MAX_EXP__ = @as(c_int, 16);
+pub const __FLT16_MIN_10_EXP__ = -@as(c_int, 4);
+pub const __FLT16_MIN_EXP__ = -@as(c_int, 13);
 pub const __FLT_DENORM_MIN__ = @as(f32, 1.40129846e-45);
 pub const __FLT_HAS_DENORM__ = @as(c_int, 1);
 pub const __FLT_DIG__ = @as(c_int, 6);
@@ -2165,6 +2298,7 @@ pub const __UINT64_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_
 pub const __INT64_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_long, 9223372036854775807, .decimal);
 pub const __INT_LEAST8_TYPE__ = i8;
 pub const __INT_LEAST8_MAX__ = @as(c_int, 127);
+pub const __INT_LEAST8_WIDTH__ = @as(c_int, 8);
 pub const __INT_LEAST8_FMTd__ = "hhd";
 pub const __INT_LEAST8_FMTi__ = "hhi";
 pub const __UINT_LEAST8_TYPE__ = u8;
@@ -2175,6 +2309,7 @@ pub const __UINT_LEAST8_FMTx__ = "hhx";
 pub const __UINT_LEAST8_FMTX__ = "hhX";
 pub const __INT_LEAST16_TYPE__ = c_short;
 pub const __INT_LEAST16_MAX__ = @as(c_int, 32767);
+pub const __INT_LEAST16_WIDTH__ = @as(c_int, 16);
 pub const __INT_LEAST16_FMTd__ = "hd";
 pub const __INT_LEAST16_FMTi__ = "hi";
 pub const __UINT_LEAST16_TYPE__ = c_ushort;
@@ -2185,6 +2320,7 @@ pub const __UINT_LEAST16_FMTx__ = "hx";
 pub const __UINT_LEAST16_FMTX__ = "hX";
 pub const __INT_LEAST32_TYPE__ = c_int;
 pub const __INT_LEAST32_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_int, 2147483647, .decimal);
+pub const __INT_LEAST32_WIDTH__ = @as(c_int, 32);
 pub const __INT_LEAST32_FMTd__ = "d";
 pub const __INT_LEAST32_FMTi__ = "i";
 pub const __UINT_LEAST32_TYPE__ = c_uint;
@@ -2195,6 +2331,7 @@ pub const __UINT_LEAST32_FMTx__ = "x";
 pub const __UINT_LEAST32_FMTX__ = "X";
 pub const __INT_LEAST64_TYPE__ = c_long;
 pub const __INT_LEAST64_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_long, 9223372036854775807, .decimal);
+pub const __INT_LEAST64_WIDTH__ = @as(c_int, 64);
 pub const __INT_LEAST64_FMTd__ = "ld";
 pub const __INT_LEAST64_FMTi__ = "li";
 pub const __UINT_LEAST64_TYPE__ = c_ulong;
@@ -2205,6 +2342,7 @@ pub const __UINT_LEAST64_FMTx__ = "lx";
 pub const __UINT_LEAST64_FMTX__ = "lX";
 pub const __INT_FAST8_TYPE__ = i8;
 pub const __INT_FAST8_MAX__ = @as(c_int, 127);
+pub const __INT_FAST8_WIDTH__ = @as(c_int, 8);
 pub const __INT_FAST8_FMTd__ = "hhd";
 pub const __INT_FAST8_FMTi__ = "hhi";
 pub const __UINT_FAST8_TYPE__ = u8;
@@ -2215,6 +2353,7 @@ pub const __UINT_FAST8_FMTx__ = "hhx";
 pub const __UINT_FAST8_FMTX__ = "hhX";
 pub const __INT_FAST16_TYPE__ = c_short;
 pub const __INT_FAST16_MAX__ = @as(c_int, 32767);
+pub const __INT_FAST16_WIDTH__ = @as(c_int, 16);
 pub const __INT_FAST16_FMTd__ = "hd";
 pub const __INT_FAST16_FMTi__ = "hi";
 pub const __UINT_FAST16_TYPE__ = c_ushort;
@@ -2225,6 +2364,7 @@ pub const __UINT_FAST16_FMTx__ = "hx";
 pub const __UINT_FAST16_FMTX__ = "hX";
 pub const __INT_FAST32_TYPE__ = c_int;
 pub const __INT_FAST32_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_int, 2147483647, .decimal);
+pub const __INT_FAST32_WIDTH__ = @as(c_int, 32);
 pub const __INT_FAST32_FMTd__ = "d";
 pub const __INT_FAST32_FMTi__ = "i";
 pub const __UINT_FAST32_TYPE__ = c_uint;
@@ -2235,6 +2375,7 @@ pub const __UINT_FAST32_FMTx__ = "x";
 pub const __UINT_FAST32_FMTX__ = "X";
 pub const __INT_FAST64_TYPE__ = c_long;
 pub const __INT_FAST64_MAX__ = @import("std").zig.c_translation.promoteIntLiteral(c_long, 9223372036854775807, .decimal);
+pub const __INT_FAST64_WIDTH__ = @as(c_int, 64);
 pub const __INT_FAST64_FMTd__ = "ld";
 pub const __INT_FAST64_FMTi__ = "li";
 pub const __UINT_FAST64_TYPE__ = c_ulong;
@@ -2267,12 +2408,13 @@ pub const __GCC_ATOMIC_INT_LOCK_FREE = @as(c_int, 2);
 pub const __GCC_ATOMIC_LONG_LOCK_FREE = @as(c_int, 2);
 pub const __GCC_ATOMIC_LLONG_LOCK_FREE = @as(c_int, 2);
 pub const __GCC_ATOMIC_POINTER_LOCK_FREE = @as(c_int, 2);
+pub const __NO_INLINE__ = @as(c_int, 1);
 pub const __PIC__ = @as(c_int, 2);
 pub const __pic__ = @as(c_int, 2);
-pub const __FLT_EVAL_METHOD__ = @as(c_int, 0);
+pub const __PIE__ = @as(c_int, 2);
+pub const __pie__ = @as(c_int, 2);
 pub const __FLT_RADIX__ = @as(c_int, 2);
 pub const __DECIMAL_DIG__ = __LDBL_DECIMAL_DIG__;
-pub const __SSP_STRONG__ = @as(c_int, 2);
 pub const __GCC_ASM_FLAG_OUTPUTS__ = @as(c_int, 1);
 pub const __code_model_small__ = @as(c_int, 1);
 pub const __amd64__ = @as(c_int, 1);
@@ -2281,13 +2423,15 @@ pub const __x86_64 = @as(c_int, 1);
 pub const __x86_64__ = @as(c_int, 1);
 pub const __SEG_GS = @as(c_int, 1);
 pub const __SEG_FS = @as(c_int, 1);
-pub const __znver2 = @as(c_int, 1);
-pub const __znver2__ = @as(c_int, 1);
-pub const __tune_znver2__ = @as(c_int, 1);
+pub const __k8 = @as(c_int, 1);
+pub const __k8__ = @as(c_int, 1);
+pub const __tune_k8__ = @as(c_int, 1);
 pub const __REGISTER_PREFIX__ = "";
 pub const __NO_MATH_INLINES = @as(c_int, 1);
 pub const __AES__ = @as(c_int, 1);
+pub const __VAES__ = @as(c_int, 1);
 pub const __PCLMUL__ = @as(c_int, 1);
+pub const __VPCLMULQDQ__ = @as(c_int, 1);
 pub const __LAHF_SAHF__ = @as(c_int, 1);
 pub const __LZCNT__ = @as(c_int, 1);
 pub const __RDRND__ = @as(c_int, 1);
@@ -2298,11 +2442,10 @@ pub const __POPCNT__ = @as(c_int, 1);
 pub const __PRFCHW__ = @as(c_int, 1);
 pub const __RDSEED__ = @as(c_int, 1);
 pub const __ADX__ = @as(c_int, 1);
-pub const __MWAITX__ = @as(c_int, 1);
 pub const __MOVBE__ = @as(c_int, 1);
-pub const __SSE4A__ = @as(c_int, 1);
 pub const __FMA__ = @as(c_int, 1);
 pub const __F16C__ = @as(c_int, 1);
+pub const __GFNI__ = @as(c_int, 1);
 pub const __SHA__ = @as(c_int, 1);
 pub const __FXSR__ = @as(c_int, 1);
 pub const __XSAVE__ = @as(c_int, 1);
@@ -2311,9 +2454,12 @@ pub const __XSAVEC__ = @as(c_int, 1);
 pub const __XSAVES__ = @as(c_int, 1);
 pub const __CLFLUSHOPT__ = @as(c_int, 1);
 pub const __CLWB__ = @as(c_int, 1);
-pub const __WBNOINVD__ = @as(c_int, 1);
-pub const __CLZERO__ = @as(c_int, 1);
+pub const __SHSTK__ = @as(c_int, 1);
 pub const __RDPID__ = @as(c_int, 1);
+pub const __WAITPKG__ = @as(c_int, 1);
+pub const __MOVDIRI__ = @as(c_int, 1);
+pub const __MOVDIR64B__ = @as(c_int, 1);
+pub const __INVPCID__ = @as(c_int, 1);
 pub const __AVX2__ = @as(c_int, 1);
 pub const __AVX__ = @as(c_int, 1);
 pub const __SSE4_2__ = @as(c_int, 1);
@@ -2345,7 +2491,6 @@ pub const __STDC_HOSTED__ = @as(c_int, 1);
 pub const __STDC_VERSION__ = @as(c_long, 201710);
 pub const __STDC_UTF_16__ = @as(c_int, 1);
 pub const __STDC_UTF_32__ = @as(c_int, 1);
-pub const __GLIBC_MINOR__ = @as(c_int, 19);
 pub const _DEBUG = @as(c_int, 1);
 pub const __GCC_HAVE_DWARF2_CFI_ASM = @as(c_int, 1);
 pub const BASEDEFS_H = "";
@@ -2354,15 +2499,16 @@ pub const IW_EXTERN_C_END = "";
 pub inline fn IW_XSTR(s: anytype) @TypeOf(IW_STR(s)) {
     return IW_STR(s);
 }
-pub inline fn IW_LLEN(L__: anytype) @TypeOf(@import("std").zig.c_translation.sizeof(L__) - @as(c_int, 1)) {
-    _ = L__;
-    return @import("std").zig.c_translation.sizeof(L__) - @as(c_int, 1);
+pub inline fn IW_LLEN(l__: anytype) @TypeOf(@import("std").zig.c_translation.sizeof(l__) - @as(c_int, 1)) {
+    _ = @TypeOf(l__);
+    return @import("std").zig.c_translation.sizeof(l__) - @as(c_int, 1);
 }
 pub const INVALID_HANDLE_VALUE = -@as(c_int, 1);
-pub inline fn INVALIDHANDLE(_HNDL: anytype) @TypeOf((_HNDL < @as(c_int, 0)) or (_HNDL == UINT16_MAX)) {
-    return (_HNDL < @as(c_int, 0)) or (_HNDL == UINT16_MAX);
+pub inline fn INVALIDHANDLE(h__: anytype) @TypeOf((h__ < @as(c_int, 0)) or (h__ == UINT16_MAX)) {
+    return (h__ < @as(c_int, 0)) or (h__ == UINT16_MAX);
 }
 pub const IW_ERROR_START = @import("std").zig.c_translation.promoteIntLiteral(c_int, 70000, .decimal);
+pub const IWNUMBUF_SIZE = @as(c_int, 32);
 pub const IW_PATH_CHR = '/';
 pub const IW_PATH_STR = "/";
 pub const IW_LINE_SEP = "\n";
@@ -2448,10 +2594,6 @@ pub const __USE_POSIX199506 = @as(c_int, 1);
 pub const __USE_XOPEN2K = @as(c_int, 1);
 pub const __USE_XOPEN2K8 = @as(c_int, 1);
 pub const _ATFILE_SOURCE = @as(c_int, 1);
-pub const __WORDSIZE = @as(c_int, 64);
-pub const __WORDSIZE_TIME64_COMPAT32 = @as(c_int, 1);
-pub const __SYSCALL_WORDSIZE = @as(c_int, 64);
-pub const __TIMESIZE = __WORDSIZE;
 pub const __USE_MISC = @as(c_int, 1);
 pub const __USE_ATFILE = @as(c_int, 1);
 pub const __USE_FORTIFY_LEVEL = @as(c_int, 0);
@@ -2463,6 +2605,7 @@ pub const __STDC_IEC_559_COMPLEX__ = @as(c_int, 1);
 pub const __STDC_ISO_10646__ = @as(c_long, 201706);
 pub const __GNU_LIBRARY__ = @as(c_int, 6);
 pub const __GLIBC__ = @as(c_int, 2);
+pub const __GLIBC_MINOR__ = @as(c_int, 31);
 pub inline fn __GLIBC_PREREQ(maj: anytype, min: anytype) @TypeOf(((__GLIBC__ << @as(c_int, 16)) + __GLIBC_MINOR__) >= ((maj << @as(c_int, 16)) + min)) {
     return ((__GLIBC__ << @as(c_int, 16)) + __GLIBC_MINOR__) >= ((maj << @as(c_int, 16)) + min);
 }
@@ -2484,17 +2627,12 @@ pub inline fn __bos(ptr: anytype) @TypeOf(__builtin_object_size(ptr, __USE_FORTI
 pub inline fn __bos0(ptr: anytype) @TypeOf(__builtin_object_size(ptr, @as(c_int, 0))) {
     return __builtin_object_size(ptr, @as(c_int, 0));
 }
-pub inline fn __glibc_objsize0(__o: anytype) @TypeOf(__bos0(__o)) {
-    return __bos0(__o);
-}
-pub inline fn __glibc_objsize(__o: anytype) @TypeOf(__bos(__o)) {
-    return __bos(__o);
-}
 pub const __glibc_c99_flexarr_available = @as(c_int, 1);
 pub inline fn __ASMNAME(cname: anytype) @TypeOf(__ASMNAME2(__USER_LABEL_PREFIX__, cname)) {
     return __ASMNAME2(__USER_LABEL_PREFIX__, cname);
 }
 pub const __wur = "";
+pub const __attribute_artificial__ = "";
 pub const __fortify_function = __extern_always_inline ++ __attribute_artificial__;
 pub inline fn __glibc_unlikely(cond: anytype) @TypeOf(__builtin_expect(cond, @as(c_int, 0))) {
     return __builtin_expect(cond, @as(c_int, 0));
@@ -2503,16 +2641,19 @@ pub inline fn __glibc_likely(cond: anytype) @TypeOf(__builtin_expect(cond, @as(c
     return __builtin_expect(cond, @as(c_int, 1));
 }
 pub const __attribute_nonstring__ = "";
-pub const __LDOUBLE_REDIRECTS_TO_FLOAT128_ABI = @as(c_int, 0);
+pub const __WORDSIZE = @as(c_int, 64);
+pub const __WORDSIZE_TIME64_COMPAT32 = @as(c_int, 1);
+pub const __SYSCALL_WORDSIZE = @as(c_int, 64);
+pub const __LONG_DOUBLE_USES_FLOAT128 = @as(c_int, 0);
 pub inline fn __LDBL_REDIR1(name: anytype, proto: anytype, alias: anytype) @TypeOf(name ++ proto) {
-    _ = alias;
+    _ = @TypeOf(alias);
     return name ++ proto;
 }
 pub inline fn __LDBL_REDIR(name: anytype, proto: anytype) @TypeOf(name ++ proto) {
     return name ++ proto;
 }
 pub inline fn __LDBL_REDIR1_NTH(name: anytype, proto: anytype, alias: anytype) @TypeOf(name ++ proto ++ __THROW) {
-    _ = alias;
+    _ = @TypeOf(alias);
     return name ++ proto ++ __THROW;
 }
 pub inline fn __LDBL_REDIR_NTH(name: anytype, proto: anytype) @TypeOf(name ++ proto ++ __THROW) {
@@ -2525,24 +2666,24 @@ pub inline fn __REDIRECT_NTH_LDBL(name: anytype, proto: anytype, alias: anytype)
     return __REDIRECT_NTH(name, proto, alias);
 }
 pub const __HAVE_GENERIC_SELECTION = @as(c_int, 1);
-pub const __attr_dealloc_free = "";
-pub const __USE_EXTERN_INLINES = @as(c_int, 1);
 pub const __stub___compat_bdflush = "";
 pub const __stub_chflags = "";
 pub const __stub_fchflags = "";
 pub const __stub_gtty = "";
+pub const __stub_lchmod = "";
 pub const __stub_revoke = "";
 pub const __stub_setlogin = "";
 pub const __stub_sigreturn = "";
+pub const __stub_sstk = "";
 pub const __stub_stty = "";
 pub const __GLIBC_USE_LIB_EXT2 = @as(c_int, 0);
 pub const __GLIBC_USE_IEC_60559_BFP_EXT = @as(c_int, 0);
 pub const __GLIBC_USE_IEC_60559_BFP_EXT_C2X = @as(c_int, 0);
-pub const __GLIBC_USE_IEC_60559_EXT = @as(c_int, 0);
 pub const __GLIBC_USE_IEC_60559_FUNCS_EXT = @as(c_int, 0);
 pub const __GLIBC_USE_IEC_60559_FUNCS_EXT_C2X = @as(c_int, 0);
 pub const __GLIBC_USE_IEC_60559_TYPES_EXT = @as(c_int, 0);
 pub const _BITS_TYPES_H = @as(c_int, 1);
+pub const __TIMESIZE = __WORDSIZE;
 pub const __S16_TYPE = c_short;
 pub const __U16_TYPE = c_ushort;
 pub const __S32_TYPE = c_int;
@@ -2584,7 +2725,6 @@ pub const __CLOCK_T_TYPE = __SYSCALL_SLONG_TYPE;
 pub const __TIME_T_TYPE = __SYSCALL_SLONG_TYPE;
 pub const __USECONDS_T_TYPE = __U32_TYPE;
 pub const __SUSECONDS_T_TYPE = __SYSCALL_SLONG_TYPE;
-pub const __SUSECONDS64_T_TYPE = __SQUAD_TYPE;
 pub const __DADDR_T_TYPE = __S32_TYPE;
 pub const __KEY_T_TYPE = __S32_TYPE;
 pub const __CLOCKID_T_TYPE = __S32_TYPE;
@@ -2596,7 +2736,6 @@ pub const __OFF_T_MATCHES_OFF64_T = @as(c_int, 1);
 pub const __INO_T_MATCHES_INO64_T = @as(c_int, 1);
 pub const __RLIM_T_MATCHES_RLIM64_T = @as(c_int, 1);
 pub const __STATFS_MATCHES_STATFS64 = @as(c_int, 1);
-pub const __KERNEL_OLD_TIMEVAL_MATCHES_TIMEVAL64 = @as(c_int, 1);
 pub const __FD_SETSIZE = @as(c_int, 1024);
 pub const _BITS_TIME64_H = @as(c_int, 1);
 pub const __TIME64_T_TYPE = __TIME_T_TYPE;
@@ -2606,6 +2745,8 @@ pub const __WCHAR_MIN = -__WCHAR_MAX - @as(c_int, 1);
 pub const _BITS_STDINT_INTN_H = @as(c_int, 1);
 pub const _BITS_STDINT_UINTN_H = @as(c_int, 1);
 pub const __intptr_t_defined = "";
+pub const __INT64_C = @import("std").zig.c_translation.Macros.L_SUFFIX;
+pub const __UINT64_C = @import("std").zig.c_translation.Macros.UL_SUFFIX;
 pub const INT8_MIN = -@as(c_int, 128);
 pub const INT16_MIN = -@as(c_int, 32767) - @as(c_int, 1);
 pub const INT32_MIN = -@import("std").zig.c_translation.promoteIntLiteral(c_int, 2147483647, .decimal) - @as(c_int, 1);
@@ -2666,12 +2807,17 @@ pub inline fn INT16_C(c: anytype) @TypeOf(c) {
 pub inline fn INT32_C(c: anytype) @TypeOf(c) {
     return c;
 }
+pub const INT64_C = @import("std").zig.c_translation.Macros.L_SUFFIX;
 pub inline fn UINT8_C(c: anytype) @TypeOf(c) {
     return c;
 }
 pub inline fn UINT16_C(c: anytype) @TypeOf(c) {
     return c;
 }
+pub const UINT32_C = @import("std").zig.c_translation.Macros.U_SUFFIX;
+pub const UINT64_C = @import("std").zig.c_translation.Macros.UL_SUFFIX;
+pub const INTMAX_C = @import("std").zig.c_translation.Macros.L_SUFFIX;
+pub const UINTMAX_C = @import("std").zig.c_translation.Macros.UL_SUFFIX;
 pub const __STDDEF_H = "";
 pub const __need_ptrdiff_t = "";
 pub const __need_size_t = "";
@@ -2684,10 +2830,10 @@ pub const _WCHAR_T = "";
 pub const NULL = @import("std").zig.c_translation.cast(?*anyopaque, @as(c_int, 0));
 pub const __CLANG_MAX_ALIGN_T_DEFINED = "";
 pub const __STDBOOL_H = "";
+pub const __bool_true_false_are_defined = @as(c_int, 1);
 pub const @"bool" = bool;
 pub const @"true" = @as(c_int, 1);
 pub const @"false" = @as(c_int, 0);
-pub const __bool_true_false_are_defined = @as(c_int, 1);
 pub const _SYS_TYPES_H = @as(c_int, 1);
 pub const __u_char_defined = "";
 pub const __ino_t_defined = "";
@@ -2717,7 +2863,7 @@ pub const __BYTE_ORDER = __LITTLE_ENDIAN;
 pub const __FLOAT_WORD_ORDER = __BYTE_ORDER;
 pub inline fn __LONG_LONG_PAIR(HI: anytype, LO: anytype) @TypeOf(HI) {
     return blk: {
-        _ = LO;
+        _ = @TypeOf(LO);
         break :blk HI;
     };
 }
@@ -2773,8 +2919,9 @@ pub inline fn le64toh(x: anytype) @TypeOf(__uint64_identity(x)) {
     return __uint64_identity(x);
 }
 pub const _SYS_SELECT_H = @as(c_int, 1);
-pub inline fn __FD_ISSET(d: anytype, s: anytype) @TypeOf((__FDS_BITS(s)[__FD_ELT(d)] & __FD_MASK(d)) != @as(c_int, 0)) {
-    return (__FDS_BITS(s)[__FD_ELT(d)] & __FD_MASK(d)) != @as(c_int, 0);
+pub const __FD_ZERO_STOS = "stosq";
+pub inline fn __FD_ISSET(d: anytype, set: anytype) @TypeOf((__FDS_BITS(set)[__FD_ELT(d)] & __FD_MASK(d)) != @as(c_int, 0)) {
+    return (__FDS_BITS(set)[__FD_ELT(d)] & __FD_MASK(d)) != @as(c_int, 0);
 }
 pub const __sigset_t_defined = @as(c_int, 1);
 pub const ____sigset_t_defined = "";
@@ -2837,7 +2984,7 @@ pub inline fn __PTHREAD_RWLOCK_INITIALIZER(__flags: anytype) @TypeOf(__flags) {
         _ = @as(c_int, 0);
         _ = @as(c_int, 0);
         _ = @as(c_int, 0);
-        _ = __PTHREAD_RWLOCK_ELISION_EXTRA;
+        _ = @TypeOf(__PTHREAD_RWLOCK_ELISION_EXTRA);
         _ = @as(c_int, 0);
         break :blk __flags;
     };
@@ -2895,15 +3042,10 @@ pub inline fn __isleap(year: anytype) @TypeOf(((year % @as(c_int, 4)) == @as(c_i
     return ((year % @as(c_int, 4)) == @as(c_int, 0)) and (((year % @as(c_int, 100)) != @as(c_int, 0)) or ((year % @as(c_int, 400)) == @as(c_int, 0)));
 }
 pub const _BITS_SETJMP_H = @as(c_int, 1);
-pub const __jmp_buf_tag_defined = @as(c_int, 1);
-pub const PTHREAD_STACK_MIN = @as(c_int, 16384);
 pub const PTHREAD_CANCELED = @import("std").zig.c_translation.cast(?*anyopaque, -@as(c_int, 1));
 pub const PTHREAD_ONCE_INIT = @as(c_int, 0);
 pub const PTHREAD_BARRIER_SERIAL_THREAD = -@as(c_int, 1);
 pub const __cleanup_fct_attribute = "";
-pub inline fn __sigsetjmp_cancel(env: anytype, savemask: anytype) @TypeOf(__sigsetjmp(@import("std").zig.c_translation.cast([*c]struct___jmp_buf_tag, @import("std").zig.c_translation.cast(?*anyopaque, env)), savemask)) {
-    return __sigsetjmp(@import("std").zig.c_translation.cast([*c]struct___jmp_buf_tag, @import("std").zig.c_translation.cast(?*anyopaque, env)), savemask);
-}
 pub const IWN_POLLTIMEOUT = @as(c_uint, 1) << @as(c_int, 21);
 pub const IWN_EPOLL = "";
 pub const _SYS_EPOLL_H = @as(c_int, 1);
@@ -2914,12 +3056,14 @@ pub const IWN_POLLIN = EPOLLIN;
 pub const IWN_POLLOUT = EPOLLOUT;
 pub const IWN_POLLONESHOT = EPOLLONESHOT;
 pub const IWN_POLLET = EPOLLET;
+pub const IWN_POLLER_POLL_NO_FDS = @as(c_uint, 0x01);
 pub const IWPOOL_H = "";
 pub const IWPOOL_POOL_SIZ = @as(c_int, 8) * @as(c_int, 1024);
 pub const IWXSTR_H = "";
 pub const __STDARG_H = "";
 pub const _VA_LIST = "";
 pub const __GNUC_VA_LIST = @as(c_int, 1);
+pub const IWJSON_H = "";
 pub const IWLOG_H = "";
 pub const IOWOW_H = "";
 pub const _STDIO_H = @as(c_int, 1);
@@ -2955,43 +3099,6 @@ pub const TMP_MAX = @import("std").zig.c_translation.promoteIntLiteral(c_int, 23
 pub const FILENAME_MAX = @as(c_int, 4096);
 pub const L_ctermid = @as(c_int, 9);
 pub const FOPEN_MAX = @as(c_int, 16);
-pub const __attr_dealloc_fclose = __attr_dealloc(fclose, @as(c_int, 1));
-pub const _BITS_FLOATN_H = "";
-pub const __HAVE_FLOAT128 = @as(c_int, 0);
-pub const __HAVE_DISTINCT_FLOAT128 = @as(c_int, 0);
-pub const __HAVE_FLOAT64X = @as(c_int, 1);
-pub const __HAVE_FLOAT64X_LONG_DOUBLE = @as(c_int, 1);
-pub const _BITS_FLOATN_COMMON_H = "";
-pub const __HAVE_FLOAT16 = @as(c_int, 0);
-pub const __HAVE_FLOAT32 = @as(c_int, 1);
-pub const __HAVE_FLOAT64 = @as(c_int, 1);
-pub const __HAVE_FLOAT32X = @as(c_int, 1);
-pub const __HAVE_FLOAT128X = @as(c_int, 0);
-pub const __HAVE_DISTINCT_FLOAT16 = __HAVE_FLOAT16;
-pub const __HAVE_DISTINCT_FLOAT32 = @as(c_int, 0);
-pub const __HAVE_DISTINCT_FLOAT64 = @as(c_int, 0);
-pub const __HAVE_DISTINCT_FLOAT32X = @as(c_int, 0);
-pub const __HAVE_DISTINCT_FLOAT64X = @as(c_int, 0);
-pub const __HAVE_DISTINCT_FLOAT128X = __HAVE_FLOAT128X;
-pub const __HAVE_FLOAT128_UNLIKE_LDBL = (__HAVE_DISTINCT_FLOAT128 != 0) and (__LDBL_MANT_DIG__ != @as(c_int, 113));
-pub const __HAVE_FLOATN_NOT_TYPEDEF = @as(c_int, 0);
-pub inline fn __f64(x: anytype) @TypeOf(x) {
-    return x;
-}
-pub inline fn __f32x(x: anytype) @TypeOf(x) {
-    return x;
-}
-pub inline fn __builtin_huge_valf32() @TypeOf(__builtin_huge_valf()) {
-    return __builtin_huge_valf();
-}
-pub inline fn __builtin_inff32() @TypeOf(__builtin_inff()) {
-    return __builtin_inff();
-}
-pub inline fn __builtin_nanf32(x: anytype) @TypeOf(__builtin_nanf(x)) {
-    return __builtin_nanf(x);
-}
-pub const _BITS_STDIO_H = @as(c_int, 1);
-pub const __STDIO_INLINE = __extern_inline;
 pub const _LOCALE_H = @as(c_int, 1);
 pub const _BITS_LOCALE_H = @as(c_int, 1);
 pub const __LC_CTYPE = @as(c_int, 0);
@@ -3034,6 +3141,12 @@ pub const LC_MEASUREMENT_MASK = @as(c_int, 1) << __LC_MEASUREMENT;
 pub const LC_IDENTIFICATION_MASK = @as(c_int, 1) << __LC_IDENTIFICATION;
 pub const LC_ALL_MASK = ((((((((((LC_CTYPE_MASK | LC_NUMERIC_MASK) | LC_TIME_MASK) | LC_COLLATE_MASK) | LC_MONETARY_MASK) | LC_MESSAGES_MASK) | LC_PAPER_MASK) | LC_NAME_MASK) | LC_ADDRESS_MASK) | LC_TELEPHONE_MASK) | LC_MEASUREMENT_MASK) | LC_IDENTIFICATION_MASK;
 pub const LC_GLOBAL_LOCALE = @import("std").zig.c_translation.cast(locale_t, -@as(c_long, 1));
+pub const JBL_PRINT_PRETTY = @import("std").zig.c_translation.cast(jbl_print_flags_t, @as(c_uint, 0x01));
+pub const JBL_PRINT_CODEPOINTS = @import("std").zig.c_translation.cast(jbl_print_flags_t, @as(c_uint, 0x02));
+pub const JBL_VCMD_OK = @import("std").zig.c_translation.cast(jbn_visitor_cmd_t, @as(c_uint, 0x00));
+pub const JBL_VCMD_TERMINATE = @import("std").zig.c_translation.cast(jbn_visitor_cmd_t, @as(c_uint, 0x01));
+pub const JBL_VCMD_SKIP_NESTED = @import("std").zig.c_translation.cast(jbn_visitor_cmd_t, @as(c_uint, 0x02));
+pub const JBN_VCMD_DELETE = @import("std").zig.c_translation.cast(jbn_visitor_cmd_t, @as(c_uint, 0x04));
 pub const IWN_WF_SESSION_ID_LEN = @as(c_int, 32);
 pub const IWN_WF_SESSION_COOKIE_KEY = "sessionid";
 pub const IWN_WF_RES_NOT_PROCESSED = @as(c_int, 0);
@@ -3057,7 +3170,6 @@ pub const IWN_WF_FORM_MULTIPART = @as(c_uint, 0x200);
 pub const IWN_WF_FORM_URL_ENCODED = @as(c_uint, 0x400);
 pub const IWN_WF_FORM_ALL = IWN_WF_FORM_MULTIPART | IWN_WF_FORM_URL_ENCODED;
 pub const IWCONV_H = "";
-pub const IWFTOA_BUFSIZE = @as(c_int, 32);
 pub const _STDLIB_H = @as(c_int, 1);
 pub const WNOHANG = @as(c_int, 1);
 pub const WUNTRACED = @as(c_int, 2);
@@ -3068,6 +3180,7 @@ pub const WNOWAIT = @import("std").zig.c_translation.promoteIntLiteral(c_int, 0x
 pub const __WNOTHREAD = @import("std").zig.c_translation.promoteIntLiteral(c_int, 0x20000000, .hexadecimal);
 pub const __WALL = @import("std").zig.c_translation.promoteIntLiteral(c_int, 0x40000000, .hexadecimal);
 pub const __WCLONE = @import("std").zig.c_translation.promoteIntLiteral(c_int, 0x80000000, .hexadecimal);
+pub const __ENUM_IDTYPE_T = @as(c_int, 1);
 pub inline fn __WEXITSTATUS(status: anytype) @TypeOf((status & @import("std").zig.c_translation.promoteIntLiteral(c_int, 0xff00, .hexadecimal)) >> @as(c_int, 8)) {
     return (status & @import("std").zig.c_translation.promoteIntLiteral(c_int, 0xff00, .hexadecimal)) >> @as(c_int, 8);
 }
@@ -3121,6 +3234,42 @@ pub inline fn WIFSTOPPED(status: anytype) @TypeOf(__WIFSTOPPED(status)) {
 pub inline fn WIFCONTINUED(status: anytype) @TypeOf(__WIFCONTINUED(status)) {
     return __WIFCONTINUED(status);
 }
+pub const _BITS_FLOATN_H = "";
+pub const __HAVE_FLOAT128 = @as(c_int, 0);
+pub const __HAVE_DISTINCT_FLOAT128 = @as(c_int, 0);
+pub const __HAVE_FLOAT64X = @as(c_int, 1);
+pub const __HAVE_FLOAT64X_LONG_DOUBLE = @as(c_int, 1);
+pub const _BITS_FLOATN_COMMON_H = "";
+pub const __HAVE_FLOAT16 = @as(c_int, 0);
+pub const __HAVE_FLOAT32 = @as(c_int, 1);
+pub const __HAVE_FLOAT64 = @as(c_int, 1);
+pub const __HAVE_FLOAT32X = @as(c_int, 1);
+pub const __HAVE_FLOAT128X = @as(c_int, 0);
+pub const __HAVE_DISTINCT_FLOAT16 = __HAVE_FLOAT16;
+pub const __HAVE_DISTINCT_FLOAT32 = @as(c_int, 0);
+pub const __HAVE_DISTINCT_FLOAT64 = @as(c_int, 0);
+pub const __HAVE_DISTINCT_FLOAT32X = @as(c_int, 0);
+pub const __HAVE_DISTINCT_FLOAT64X = @as(c_int, 0);
+pub const __HAVE_DISTINCT_FLOAT128X = __HAVE_FLOAT128X;
+pub const __HAVE_FLOAT128_UNLIKE_LDBL = (__HAVE_DISTINCT_FLOAT128 != 0) and (__LDBL_MANT_DIG__ != @as(c_int, 113));
+pub const __HAVE_FLOATN_NOT_TYPEDEF = @as(c_int, 0);
+pub const __f32 = @import("std").zig.c_translation.Macros.F_SUFFIX;
+pub inline fn __f64(x: anytype) @TypeOf(x) {
+    return x;
+}
+pub inline fn __f32x(x: anytype) @TypeOf(x) {
+    return x;
+}
+pub const __f64x = @import("std").zig.c_translation.Macros.L_SUFFIX;
+pub inline fn __builtin_huge_valf32() @TypeOf(__builtin_huge_valf()) {
+    return __builtin_huge_valf();
+}
+pub inline fn __builtin_inff32() @TypeOf(__builtin_inff()) {
+    return __builtin_inff();
+}
+pub inline fn __builtin_nanf32(x: anytype) @TypeOf(__builtin_nanf(x)) {
+    return __builtin_nanf(x);
+}
 pub const __ldiv_t_defined = @as(c_int, 1);
 pub const __lldiv_t_defined = @as(c_int, 1);
 pub const RAND_MAX = @import("std").zig.c_translation.promoteIntLiteral(c_int, 2147483647, .decimal);
@@ -3130,6 +3279,7 @@ pub const MB_CUR_MAX = __ctype_get_mb_cur_max();
 pub const _ALLOCA_H = @as(c_int, 1);
 pub const __COMPAR_FN_T = "";
 pub const _SIGNAL_H = "";
+pub const _BITS_SIGNUM_H = @as(c_int, 1);
 pub const _BITS_SIGNUM_GENERIC_H = @as(c_int, 1);
 pub const SIG_ERR = @import("std").zig.c_translation.cast(__sighandler_t, -@as(c_int, 1));
 pub const SIG_DFL = @import("std").zig.c_translation.cast(__sighandler_t, @as(c_int, 0));
@@ -3144,34 +3294,33 @@ pub const SIGHUP = @as(c_int, 1);
 pub const SIGQUIT = @as(c_int, 3);
 pub const SIGTRAP = @as(c_int, 5);
 pub const SIGKILL = @as(c_int, 9);
+pub const SIGBUS = @as(c_int, 10);
+pub const SIGSYS = @as(c_int, 12);
 pub const SIGPIPE = @as(c_int, 13);
 pub const SIGALRM = @as(c_int, 14);
+pub const SIGURG = @as(c_int, 16);
+pub const SIGSTOP = @as(c_int, 17);
+pub const SIGTSTP = @as(c_int, 18);
+pub const SIGCONT = @as(c_int, 19);
+pub const SIGCHLD = @as(c_int, 20);
+pub const SIGTTIN = @as(c_int, 21);
+pub const SIGTTOU = @as(c_int, 22);
+pub const SIGPOLL = @as(c_int, 23);
+pub const SIGXCPU = @as(c_int, 24);
+pub const SIGXFSZ = @as(c_int, 25);
+pub const SIGVTALRM = @as(c_int, 26);
+pub const SIGPROF = @as(c_int, 27);
+pub const SIGUSR1 = @as(c_int, 30);
+pub const SIGUSR2 = @as(c_int, 31);
+pub const SIGWINCH = @as(c_int, 28);
 pub const SIGIO = SIGPOLL;
 pub const SIGIOT = SIGABRT;
 pub const SIGCLD = SIGCHLD;
-pub const _BITS_SIGNUM_ARCH_H = @as(c_int, 1);
+pub const __SIGRTMIN = @as(c_int, 32);
+pub const __SIGRTMAX = __SIGRTMIN;
+pub const _NSIG = __SIGRTMAX + @as(c_int, 1);
 pub const SIGSTKFLT = @as(c_int, 16);
 pub const SIGPWR = @as(c_int, 30);
-pub const SIGBUS = @as(c_int, 7);
-pub const SIGSYS = @as(c_int, 31);
-pub const SIGURG = @as(c_int, 23);
-pub const SIGSTOP = @as(c_int, 19);
-pub const SIGTSTP = @as(c_int, 20);
-pub const SIGCONT = @as(c_int, 18);
-pub const SIGCHLD = @as(c_int, 17);
-pub const SIGTTIN = @as(c_int, 21);
-pub const SIGTTOU = @as(c_int, 22);
-pub const SIGPOLL = @as(c_int, 29);
-pub const SIGXFSZ = @as(c_int, 25);
-pub const SIGXCPU = @as(c_int, 24);
-pub const SIGVTALRM = @as(c_int, 26);
-pub const SIGPROF = @as(c_int, 27);
-pub const SIGUSR1 = @as(c_int, 10);
-pub const SIGUSR2 = @as(c_int, 12);
-pub const SIGWINCH = @as(c_int, 28);
-pub const __SIGRTMIN = @as(c_int, 32);
-pub const __SIGRTMAX = @as(c_int, 64);
-pub const _NSIG = __SIGRTMAX + @as(c_int, 1);
 pub const __sig_atomic_t_defined = @as(c_int, 1);
 pub const __siginfo_t_defined = @as(c_int, 1);
 pub const ____sigval_t_defined = "";
@@ -3191,8 +3340,8 @@ pub const __sigevent_t_defined = @as(c_int, 1);
 pub const __SIGEV_MAX_SIZE = @as(c_int, 64);
 pub const __SIGEV_PAD_SIZE = (__SIGEV_MAX_SIZE / @import("std").zig.c_translation.sizeof(c_int)) - @as(c_int, 4);
 pub const _BITS_SIGEVENT_CONSTS_H = @as(c_int, 1);
-pub inline fn sigmask(sig: anytype) @TypeOf(__glibc_macro_warning("sigmask is deprecated")(@import("std").zig.c_translation.cast(c_int, @as(c_uint, 1) << (sig - @as(c_int, 1))))) {
-    return __glibc_macro_warning("sigmask is deprecated")(@import("std").zig.c_translation.cast(c_int, @as(c_uint, 1) << (sig - @as(c_int, 1))));
+pub inline fn sigmask(sig: anytype) c_int {
+    return @import("std").zig.c_translation.cast(c_int, @as(c_uint, 1) << (sig - @as(c_int, 1)));
 }
 pub const NSIG = _NSIG;
 pub const _BITS_SIGACTION_H = @as(c_int, 1);
@@ -3384,26 +3533,22 @@ pub const sigval = union_sigval;
 pub const sigevent = struct_sigevent;
 pub const __locale_data = struct___locale_data;
 pub const __locale_struct = struct___locale_struct;
-pub const __jmp_buf_tag = struct___jmp_buf_tag;
 pub const _pthread_cleanup_buffer = struct__pthread_cleanup_buffer;
-pub const __cancel_jmp_buf_tag = struct___cancel_jmp_buf_tag;
 pub const __pthread_cleanup_frame = struct___pthread_cleanup_frame;
+pub const __jmp_buf_tag = struct___jmp_buf_tag;
 pub const EPOLL_EVENTS = enum_EPOLL_EVENTS;
 pub const epoll_data = union_epoll_data;
 pub const epoll_event = struct_epoll_event;
 pub const iwn_poller = struct_iwn_poller;
+pub const iwn_poller_spec = struct_iwn_poller_spec;
 pub const iwn_poller_adapter = struct_iwn_poller_adapter;
 pub const _IWPOOL = struct__IWPOOL;
 pub const iwn_pair = struct_iwn_pair;
 pub const iwn_pairs = struct_iwn_pairs;
 pub const iwn_val = struct_iwn_val;
 pub const iwn_vals = struct_iwn_vals;
-pub const _IWXSTR = struct__IWXSTR;
 pub const __va_list_tag = struct___va_list_tag;
-pub const iwn_http_server = struct_iwn_http_server;
-pub const iwn_http_req = struct_iwn_http_req;
-pub const iwn_http_server_ssl_spec = struct_iwn_http_server_ssl_spec;
-pub const iwn_http_server_spec = struct_iwn_http_server_spec;
+pub const _IWXSTR = struct__IWXSTR;
 pub const _G_fpos_t = struct__G_fpos_t;
 pub const _G_fpos64_t = struct__G_fpos64_t;
 pub const _IO_marker = struct__IO_marker;
@@ -3411,6 +3556,16 @@ pub const _IO_codecvt = struct__IO_codecvt;
 pub const _IO_wide_data = struct__IO_wide_data;
 pub const _IO_FILE = struct__IO_FILE;
 pub const lconv = struct_lconv;
+pub const _JBL = struct__JBL;
+pub const _JBL_iterator = struct__JBL_iterator;
+pub const _JBL_NODE = struct__JBL_NODE;
+pub const _JBL_PATCH = struct__JBL_PATCH;
+pub const _JBL_PTR = struct__JBL_PTR;
+pub const _JBN_VCTX = struct__JBN_VCTX;
+pub const iwn_http_server = struct_iwn_http_server;
+pub const iwn_http_req = struct_iwn_http_req;
+pub const iwn_http_server_ssl_spec = struct_iwn_http_server_ssl_spec;
+pub const iwn_http_server_spec = struct_iwn_http_server_spec;
 pub const iwn_wf_route_submatch = struct_iwn_wf_route_submatch;
 pub const iwn_wf_req = struct_iwn_wf_req;
 pub const iwn_wf_ctx = struct_iwn_wf_ctx;

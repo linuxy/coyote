@@ -71,11 +71,11 @@ const Cache = struct {
     }
 };
 
-var global_fn: fn(req: Request, data: Data) u32 = undefined;
+var global_fn: ?*const fn(req: Request, data: Data) u32 = undefined;
 
 //This removes the callconv requirement
 //TODO: Unpack and repack the Request struct w/ Zig types
-pub fn Handler(callback_fn: fn(req: Request, user_data: Data) u32) fn(req: Request, user_data: Data) callconv (.C) c_int {
+pub fn Handler(callback_fn: ?*const fn(req: Request, user_data: Data) u32) ?*const fn(req: Request, user_data: Data) callconv (.C) c_int {
     global_fn = callback_fn;
 
     const cb = struct {
@@ -83,7 +83,7 @@ pub fn Handler(callback_fn: fn(req: Request, user_data: Data) u32) fn(req: Reque
             req: Request,
             user_data: Data,
         ) callconv (.C) c_int {
-            return @intCast(c_int, global_fn(req, user_data));
+            return @intCast(c_int, global_fn.?(req, user_data));
         }
     }.cb;
 
@@ -164,7 +164,7 @@ pub fn render(path: [*:0]const u8, vars: anytype) Rendered {
     template_lock.unlock();
 
     jinja._Py_DECREF(rendered);
-    return .{.data = rendered_utf8, .len = rendered_utf8.len};
+    return .{.data = @ptrCast([*:0]const u8, rendered_utf8), .len = rendered_utf8.len};
 }
 
 pub fn response(req: [*c]http.iwn_wf_req, code: u32, mime: []const u8, body: [*c]const u8, body_len: ?usize, user_data: ?*anyopaque) !void {
@@ -176,7 +176,7 @@ pub fn response(req: [*c]http.iwn_wf_req, code: u32, mime: []const u8, body: [*c
 pub fn routes(self: *Coyote) !void {
     var route: http.struct_iwn_wf_route = undefined;
     var route_pattern: ?[]const u8 = null;
-    var route_handler: fn(req: Request, data: Data) callconv(.C) c_int = undefined;
+    var route_handler: ?*const fn(req: Request, data: Data) callconv(.C) c_int = undefined;
     var route_flags: u32 = undefined;
 
     inline for (@typeInfo(@import("root")).Struct.decls) |decl| {
@@ -187,14 +187,14 @@ pub fn routes(self: *Coyote) !void {
             log.info("found decl, {s}", .{decl.name});
             inline for (std.meta.fields(@field(@import("root"), decl.name))) |member| {
                 log.info("found member, {s}", .{member.name});
-                var member_type = @field(@import("root"), decl.name){};
+                comptime var member_type = @field(@import("root"), decl.name){};
                 if(std.mem.eql(u8, member.name, "route")) {
                     route_pattern = member_type.route;
-                    log.info("found route_pattern, {s}", .{route_pattern});
+                    //log.info("found route_pattern, {s}", .{route_pattern});
                 }
                 if(std.mem.eql(u8, member.name, "handler")) {
                     route_handler = Handler(member_type.handler);
-                    log.info("found handler, {s}", .{route_handler});
+                    //log.info("found handler, {s}", .{route_handler.?});
                 }
                 if(std.mem.eql(u8, member.name, "flags")) {
                     route_flags = member_type.flags;

@@ -772,9 +772,9 @@ pub extern fn valloc(__size: usize) ?*anyopaque;
 pub extern fn posix_memalign(__memptr: [*c]?*anyopaque, __alignment: usize, __size: usize) c_int;
 pub extern fn aligned_alloc(__alignment: c_ulong, __size: c_ulong) ?*anyopaque;
 pub extern fn abort() noreturn;
-pub extern fn atexit(__func: ?fn () callconv(.C) void) c_int;
-pub extern fn at_quick_exit(__func: ?fn () callconv(.C) void) c_int;
-pub extern fn on_exit(__func: ?fn (c_int, ?*anyopaque) callconv(.C) void, __arg: ?*anyopaque) c_int;
+pub extern fn atexit(__func: ?*const fn () callconv(.C) void) c_int;
+pub extern fn at_quick_exit(__func: ?*const fn () callconv(.C) void) c_int;
+pub extern fn on_exit(__func: ?*const fn (c_int, ?*anyopaque) callconv(.C) void, __arg: ?*anyopaque) c_int;
 pub extern fn exit(__status: c_int) noreturn;
 pub extern fn quick_exit(__status: c_int) noreturn;
 pub extern fn _Exit(__status: c_int) noreturn;
@@ -797,9 +797,9 @@ pub extern fn mkostemps64(__template: [*c]u8, __suffixlen: c_int, __flags: c_int
 pub extern fn system(__command: [*c]const u8) c_int;
 pub extern fn canonicalize_file_name(__name: [*c]const u8) [*c]u8;
 pub extern fn realpath(noalias __name: [*c]const u8, noalias __resolved: [*c]u8) [*c]u8;
-pub const __compar_fn_t = ?fn (?*const anyopaque, ?*const anyopaque) callconv(.C) c_int;
+pub const __compar_fn_t = ?*const fn (?*const anyopaque, ?*const anyopaque) callconv(.C) c_int;
 pub const comparison_fn_t = __compar_fn_t;
-pub const __compar_d_fn_t = ?fn (?*const anyopaque, ?*const anyopaque, ?*anyopaque) callconv(.C) c_int;
+pub const __compar_d_fn_t = ?*const fn (?*const anyopaque, ?*const anyopaque, ?*anyopaque) callconv(.C) c_int;
 pub fn bsearch(arg___key: ?*const anyopaque, arg___base: ?*const anyopaque, arg___nmemb: usize, arg___size: usize, arg___compar: __compar_fn_t) callconv(.C) ?*anyopaque {
     var __key = arg___key;
     var __base = arg___base;
@@ -2718,7 +2718,7 @@ pub const __u64 = c_ulonglong;
 pub const __kernel_fd_set = extern struct {
     fds_bits: [16]c_ulong,
 };
-pub const __kernel_sighandler_t = ?fn (c_int) callconv(.C) void;
+pub const __kernel_sighandler_t = ?*const fn (c_int) callconv(.C) void;
 pub const __kernel_key_t = c_int;
 pub const __kernel_mqd_t = c_int;
 pub const __kernel_old_uid_t = c_ushort;
@@ -2802,21 +2802,21 @@ pub const struct__object = extern struct {
     ob_type: [*c]PyTypeObject,
 };
 pub const PyObject = struct__object;
-pub const destructor = ?fn ([*c]PyObject) callconv(.C) void;
-pub const getattrfunc = ?fn ([*c]PyObject, [*c]u8) callconv(.C) [*c]PyObject;
-pub const setattrfunc = ?fn ([*c]PyObject, [*c]u8, [*c]PyObject) callconv(.C) c_int;
-pub const reprfunc = ?fn ([*c]PyObject) callconv(.C) [*c]PyObject;
-pub const hashfunc = ?fn ([*c]PyObject) callconv(.C) Py_hash_t;
-pub const ternaryfunc = ?fn ([*c]PyObject, [*c]PyObject, [*c]PyObject) callconv(.C) [*c]PyObject;
-pub const getattrofunc = ?fn ([*c]PyObject, [*c]PyObject) callconv(.C) [*c]PyObject;
-pub const setattrofunc = ?fn ([*c]PyObject, [*c]PyObject, [*c]PyObject) callconv(.C) c_int;
-pub const visitproc = ?fn ([*c]PyObject, ?*anyopaque) callconv(.C) c_int;
-pub const traverseproc = ?fn ([*c]PyObject, visitproc, ?*anyopaque) callconv(.C) c_int;
-pub const inquiry = ?fn ([*c]PyObject) callconv(.C) c_int;
-pub const richcmpfunc = ?fn ([*c]PyObject, [*c]PyObject, c_int) callconv(.C) [*c]PyObject;
-pub const getiterfunc = ?fn ([*c]PyObject) callconv(.C) [*c]PyObject;
-pub const iternextfunc = ?fn ([*c]PyObject) callconv(.C) [*c]PyObject;
-pub const PyCFunction = ?fn ([*c]PyObject, [*c]PyObject) callconv(.C) [*c]PyObject;
+pub const destructor = ?*const fn ([*c]PyObject) callconv(.C) void;
+pub const getattrfunc = ?*const fn ([*c]PyObject, [*c]u8) callconv(.C) [*c]PyObject;
+pub const setattrfunc = ?*const fn ([*c]PyObject, [*c]u8, [*c]PyObject) callconv(.C) c_int;
+pub const reprfunc = ?*const fn ([*c]PyObject) callconv(.C) [*c]PyObject;
+pub const hashfunc = ?*const fn ([*c]PyObject) callconv(.C) Py_hash_t;
+pub const ternaryfunc = ?*const fn ([*c]PyObject, [*c]PyObject, [*c]PyObject) callconv(.C) [*c]PyObject;
+pub const getattrofunc = ?*const fn ([*c]PyObject, [*c]PyObject) callconv(.C) [*c]PyObject;
+pub const setattrofunc = ?*const fn ([*c]PyObject, [*c]PyObject, [*c]PyObject) callconv(.C) c_int;
+pub const visitproc = ?*const fn ([*c]PyObject, ?*anyopaque) callconv(.C) c_int;
+pub const traverseproc = ?*const fn ([*c]PyObject, visitproc, ?*anyopaque) callconv(.C) c_int;
+pub const inquiry = ?*const fn ([*c]PyObject) callconv(.C) c_int;
+pub const richcmpfunc = ?*const fn ([*c]PyObject, [*c]PyObject, c_int) callconv(.C) [*c]PyObject;
+pub const getiterfunc = ?*const fn ([*c]PyObject) callconv(.C) [*c]PyObject;
+pub const iternextfunc = ?*const fn ([*c]PyObject) callconv(.C) [*c]PyObject;
+pub const PyCFunction = ?*const fn ([*c]PyObject, [*c]PyObject) callconv(.C) [*c]PyObject;
 pub const struct_PyMethodDef = extern struct {
     ml_name: [*c]const u8,
     ml_meth: PyCFunction,
@@ -2824,8 +2824,8 @@ pub const struct_PyMethodDef = extern struct {
     ml_doc: [*c]const u8,
 };
 pub const struct_PyMemberDef = opaque {};
-pub const getter = ?fn ([*c]PyObject, ?*anyopaque) callconv(.C) [*c]PyObject;
-pub const setter = ?fn ([*c]PyObject, [*c]PyObject, ?*anyopaque) callconv(.C) c_int;
+pub const getter = ?*const fn ([*c]PyObject, ?*anyopaque) callconv(.C) [*c]PyObject;
+pub const setter = ?*const fn ([*c]PyObject, [*c]PyObject, ?*anyopaque) callconv(.C) c_int;
 pub const struct_PyGetSetDef = extern struct {
     name: [*c]const u8,
     get: getter,
@@ -2833,13 +2833,13 @@ pub const struct_PyGetSetDef = extern struct {
     doc: [*c]const u8,
     closure: ?*anyopaque,
 };
-pub const descrgetfunc = ?fn ([*c]PyObject, [*c]PyObject, [*c]PyObject) callconv(.C) [*c]PyObject;
-pub const descrsetfunc = ?fn ([*c]PyObject, [*c]PyObject, [*c]PyObject) callconv(.C) c_int;
-pub const initproc = ?fn ([*c]PyObject, [*c]PyObject, [*c]PyObject) callconv(.C) c_int;
-pub const allocfunc = ?fn ([*c]PyTypeObject, Py_ssize_t) callconv(.C) [*c]PyObject;
-pub const newfunc = ?fn ([*c]PyTypeObject, [*c]PyObject, [*c]PyObject) callconv(.C) [*c]PyObject;
-pub const freefunc = ?fn (?*anyopaque) callconv(.C) void;
-pub const vectorcallfunc = ?fn ([*c]PyObject, [*c]const [*c]PyObject, usize, [*c]PyObject) callconv(.C) [*c]PyObject;
+pub const descrgetfunc = ?*const fn ([*c]PyObject, [*c]PyObject, [*c]PyObject) callconv(.C) [*c]PyObject;
+pub const descrsetfunc = ?*const fn ([*c]PyObject, [*c]PyObject, [*c]PyObject) callconv(.C) c_int;
+pub const initproc = ?*const fn ([*c]PyObject, [*c]PyObject, [*c]PyObject) callconv(.C) c_int;
+pub const allocfunc = ?*const fn ([*c]PyTypeObject, Py_ssize_t) callconv(.C) [*c]PyObject;
+pub const newfunc = ?*const fn ([*c]PyTypeObject, [*c]PyObject, [*c]PyObject) callconv(.C) [*c]PyObject;
+pub const freefunc = ?*const fn (?*anyopaque) callconv(.C) void;
+pub const vectorcallfunc = ?*const fn ([*c]PyObject, [*c]const [*c]PyObject, usize, [*c]PyObject) callconv(.C) [*c]PyObject;
 pub const struct__typeobject = extern struct {
     ob_base: PyVarObject,
     tp_name: [*c]const u8,
@@ -2915,15 +2915,15 @@ pub fn _Py_SET_SIZE(arg_ob: [*c]PyVarObject, arg_size: Py_ssize_t) callconv(.C) 
     var size = arg_size;
     ob.*.ob_size = size;
 }
-pub const unaryfunc = ?fn ([*c]PyObject) callconv(.C) [*c]PyObject;
-pub const binaryfunc = ?fn ([*c]PyObject, [*c]PyObject) callconv(.C) [*c]PyObject;
-pub const lenfunc = ?fn ([*c]PyObject) callconv(.C) Py_ssize_t;
-pub const ssizeargfunc = ?fn ([*c]PyObject, Py_ssize_t) callconv(.C) [*c]PyObject;
-pub const ssizessizeargfunc = ?fn ([*c]PyObject, Py_ssize_t, Py_ssize_t) callconv(.C) [*c]PyObject;
-pub const ssizeobjargproc = ?fn ([*c]PyObject, Py_ssize_t, [*c]PyObject) callconv(.C) c_int;
-pub const ssizessizeobjargproc = ?fn ([*c]PyObject, Py_ssize_t, Py_ssize_t, [*c]PyObject) callconv(.C) c_int;
-pub const objobjargproc = ?fn ([*c]PyObject, [*c]PyObject, [*c]PyObject) callconv(.C) c_int;
-pub const objobjproc = ?fn ([*c]PyObject, [*c]PyObject) callconv(.C) c_int;
+pub const unaryfunc = ?*const fn ([*c]PyObject) callconv(.C) [*c]PyObject;
+pub const binaryfunc = ?*const fn ([*c]PyObject, [*c]PyObject) callconv(.C) [*c]PyObject;
+pub const lenfunc = ?*const fn ([*c]PyObject) callconv(.C) Py_ssize_t;
+pub const ssizeargfunc = ?*const fn ([*c]PyObject, Py_ssize_t) callconv(.C) [*c]PyObject;
+pub const ssizessizeargfunc = ?*const fn ([*c]PyObject, Py_ssize_t, Py_ssize_t) callconv(.C) [*c]PyObject;
+pub const ssizeobjargproc = ?*const fn ([*c]PyObject, Py_ssize_t, [*c]PyObject) callconv(.C) c_int;
+pub const ssizessizeobjargproc = ?*const fn ([*c]PyObject, Py_ssize_t, Py_ssize_t, [*c]PyObject) callconv(.C) c_int;
+pub const objobjargproc = ?*const fn ([*c]PyObject, [*c]PyObject, [*c]PyObject) callconv(.C) c_int;
+pub const objobjproc = ?*const fn ([*c]PyObject, [*c]PyObject) callconv(.C) c_int;
 pub const PyType_Slot = extern struct {
     slot: c_int,
     pfunc: ?*anyopaque,
@@ -3029,8 +3029,8 @@ pub const struct_bufferinfo = extern struct {
     internal: ?*anyopaque,
 };
 pub const Py_buffer = struct_bufferinfo;
-pub const getbufferproc = ?fn ([*c]PyObject, [*c]Py_buffer, c_int) callconv(.C) c_int;
-pub const releasebufferproc = ?fn ([*c]PyObject, [*c]Py_buffer) callconv(.C) void;
+pub const getbufferproc = ?*const fn ([*c]PyObject, [*c]Py_buffer, c_int) callconv(.C) c_int;
+pub const releasebufferproc = ?*const fn ([*c]PyObject, [*c]Py_buffer) callconv(.C) void;
 pub const PyNumberMethods = extern struct {
     nb_add: binaryfunc,
     nb_subtract: binaryfunc,
@@ -3151,7 +3151,7 @@ pub const struct__is = opaque {};
 pub const PyInterpreterState = struct__is;
 pub const struct__frame = opaque {};
 pub const PyFrameObject = struct__frame;
-pub const Py_tracefunc = ?fn ([*c]PyObject, ?*PyFrameObject, c_int, [*c]PyObject) callconv(.C) c_int;
+pub const Py_tracefunc = ?*const fn ([*c]PyObject, ?*PyFrameObject, c_int, [*c]PyObject) callconv(.C) c_int;
 pub const struct__err_stackitem = extern struct {
     exc_type: [*c]PyObject,
     exc_value: [*c]PyObject,
@@ -3185,7 +3185,7 @@ pub const struct__ts = extern struct {
     thread_id: c_ulong,
     trash_delete_nesting: c_int,
     trash_delete_later: [*c]PyObject,
-    on_delete: ?fn (?*anyopaque) callconv(.C) void,
+    on_delete: ?*const fn (?*anyopaque) callconv(.C) void,
     on_delete_data: ?*anyopaque,
     coroutine_origin_tracking_depth: c_int,
     async_gen_firstiter: [*c]PyObject,
@@ -3280,10 +3280,10 @@ pub const PYMEM_ALLOCATOR_PYMALLOC_DEBUG: c_int = 6;
 pub const PyMemAllocatorName = c_uint;
 pub const PyMemAllocatorEx = extern struct {
     ctx: ?*anyopaque,
-    malloc: ?fn (?*anyopaque, usize) callconv(.C) ?*anyopaque,
-    calloc: ?fn (?*anyopaque, usize, usize) callconv(.C) ?*anyopaque,
-    realloc: ?fn (?*anyopaque, ?*anyopaque, usize) callconv(.C) ?*anyopaque,
-    free: ?fn (?*anyopaque, ?*anyopaque) callconv(.C) void,
+    malloc: ?*const fn (?*anyopaque, usize) callconv(.C) ?*anyopaque,
+    calloc: ?*const fn (?*anyopaque, usize, usize) callconv(.C) ?*anyopaque,
+    realloc: ?*const fn (?*anyopaque, ?*anyopaque, usize) callconv(.C) ?*anyopaque,
+    free: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void,
 };
 pub extern fn PyMem_GetAllocator(domain: PyMemAllocatorDomain, allocator: [*c]PyMemAllocatorEx) void;
 pub extern fn PyMem_SetAllocator(domain: PyMemAllocatorDomain, allocator: [*c]PyMemAllocatorEx) void;
@@ -3343,8 +3343,8 @@ pub extern fn _Py_GetAllocatedBlocks() Py_ssize_t;
 pub extern fn _PyObject_DebugMallocStats(out: [*c]FILE) c_int;
 pub const PyObjectArenaAllocator = extern struct {
     ctx: ?*anyopaque,
-    alloc: ?fn (?*anyopaque, usize) callconv(.C) ?*anyopaque,
-    free: ?fn (?*anyopaque, ?*anyopaque, usize) callconv(.C) void,
+    alloc: ?*const fn (?*anyopaque, usize) callconv(.C) ?*anyopaque,
+    free: ?*const fn (?*anyopaque, ?*anyopaque, usize) callconv(.C) void,
 };
 pub extern fn PyObject_GetArenaAllocator(allocator: [*c]PyObjectArenaAllocator) void;
 pub extern fn PyObject_SetArenaAllocator(allocator: [*c]PyObjectArenaAllocator) void;
@@ -3383,7 +3383,7 @@ pub const _Py_HashSecret_t = extern union {
 };
 pub extern var _Py_HashSecret: _Py_HashSecret_t;
 pub const PyHash_FuncDef = extern struct {
-    hash: ?fn (?*const anyopaque, Py_ssize_t) callconv(.C) Py_hash_t,
+    hash: ?*const fn (?*const anyopaque, Py_ssize_t) callconv(.C) Py_hash_t,
     name: [*c]const u8,
     hash_bits: c_int,
     seed_bits: c_int,
@@ -4095,7 +4095,7 @@ pub extern fn _PyDict_GetItemStringWithError([*c]PyObject, [*c]const u8) [*c]PyO
 pub extern fn PyDict_SetDefault(mp: [*c]PyObject, key: [*c]PyObject, defaultobj: [*c]PyObject) [*c]PyObject;
 pub extern fn _PyDict_SetItem_KnownHash(mp: [*c]PyObject, key: [*c]PyObject, item: [*c]PyObject, hash: Py_hash_t) c_int;
 pub extern fn _PyDict_DelItem_KnownHash(mp: [*c]PyObject, key: [*c]PyObject, hash: Py_hash_t) c_int;
-pub extern fn _PyDict_DelItemIf(mp: [*c]PyObject, key: [*c]PyObject, predicate: ?fn ([*c]PyObject) callconv(.C) c_int) c_int;
+pub extern fn _PyDict_DelItemIf(mp: [*c]PyObject, key: [*c]PyObject, predicate: ?*const fn ([*c]PyObject) callconv(.C) c_int) c_int;
 pub extern fn _PyDict_NewKeysForClass() ?*PyDictKeysObject;
 pub extern fn PyObject_GenericGetDict([*c]PyObject, ?*anyopaque) [*c]PyObject;
 pub extern fn _PyDict_Next(mp: [*c]PyObject, pos: [*c]Py_ssize_t, key: [*c][*c]PyObject, value: [*c][*c]PyObject, hash: [*c]Py_hash_t) c_int;
@@ -4163,10 +4163,10 @@ pub extern fn PySet_Discard(set: [*c]PyObject, key: [*c]PyObject) c_int;
 pub extern fn PySet_Pop(set: [*c]PyObject) [*c]PyObject;
 pub extern fn PySet_Size(anyset: [*c]PyObject) Py_ssize_t;
 pub extern var PyCFunction_Type: PyTypeObject;
-pub const _PyCFunctionFast = ?fn ([*c]PyObject, [*c]const [*c]PyObject, Py_ssize_t) callconv(.C) [*c]PyObject;
-pub const PyCFunctionWithKeywords = ?fn ([*c]PyObject, [*c]PyObject, [*c]PyObject) callconv(.C) [*c]PyObject;
-pub const _PyCFunctionFastWithKeywords = ?fn ([*c]PyObject, [*c]const [*c]PyObject, Py_ssize_t, [*c]PyObject) callconv(.C) [*c]PyObject;
-pub const PyCMethod = ?fn ([*c]PyObject, [*c]PyTypeObject, [*c]const [*c]PyObject, usize, [*c]PyObject) callconv(.C) [*c]PyObject;
+pub const _PyCFunctionFast = ?*const fn ([*c]PyObject, [*c]const [*c]PyObject, Py_ssize_t) callconv(.C) [*c]PyObject;
+pub const PyCFunctionWithKeywords = ?*const fn ([*c]PyObject, [*c]PyObject, [*c]PyObject) callconv(.C) [*c]PyObject;
+pub const _PyCFunctionFastWithKeywords = ?*const fn ([*c]PyObject, [*c]const [*c]PyObject, Py_ssize_t, [*c]PyObject) callconv(.C) [*c]PyObject;
+pub const PyCMethod = ?*const fn ([*c]PyObject, [*c]PyTypeObject, [*c]const [*c]PyObject, usize, [*c]PyObject) callconv(.C) [*c]PyObject;
 pub extern fn PyCFunction_GetFunction([*c]PyObject) PyCFunction;
 pub extern fn PyCFunction_GetSelf([*c]PyObject) [*c]PyObject;
 pub extern fn PyCFunction_GetFlags([*c]PyObject) c_int;
@@ -4200,7 +4200,7 @@ pub extern fn _PyModule_ClearDict([*c]PyObject) void;
 pub extern fn _PyModuleSpec_IsInitializing([*c]PyObject) c_int;
 pub const struct_PyModuleDef_Base = extern struct {
     ob_base: PyObject,
-    m_init: ?fn () callconv(.C) [*c]PyObject,
+    m_init: ?*const fn () callconv(.C) [*c]PyObject,
     m_index: Py_ssize_t,
     m_copy: [*c]PyObject,
 };
@@ -4291,12 +4291,12 @@ pub extern var Py_UTF8Mode: c_int;
 pub extern fn Py_UniversalNewlineFgets([*c]u8, c_int, [*c]FILE, [*c]PyObject) [*c]u8;
 pub extern fn PyFile_NewStdPrinter(c_int) [*c]PyObject;
 pub extern var PyStdPrinter_Type: PyTypeObject;
-pub const Py_OpenCodeHookFunction = ?fn ([*c]PyObject, ?*anyopaque) callconv(.C) [*c]PyObject;
+pub const Py_OpenCodeHookFunction = ?*const fn ([*c]PyObject, ?*anyopaque) callconv(.C) [*c]PyObject;
 pub extern fn PyFile_OpenCode(utf8path: [*c]const u8) [*c]PyObject;
 pub extern fn PyFile_OpenCodeObject(path: [*c]PyObject) [*c]PyObject;
 pub extern fn PyFile_SetOpenCodeHook(hook: Py_OpenCodeHookFunction, userData: ?*anyopaque) c_int;
 pub extern var PyCapsule_Type: PyTypeObject;
-pub const PyCapsule_Destructor = ?fn ([*c]PyObject) callconv(.C) void;
+pub const PyCapsule_Destructor = ?*const fn ([*c]PyObject) callconv(.C) void;
 pub extern fn PyCapsule_New(pointer: ?*anyopaque, name: [*c]const u8, destructor: PyCapsule_Destructor) [*c]PyObject;
 pub extern fn PyCapsule_GetPointer(capsule: [*c]PyObject, name: [*c]const u8) ?*anyopaque;
 pub extern fn PyCapsule_GetDestructor(capsule: [*c]PyObject) PyCapsule_Destructor;
@@ -4544,7 +4544,7 @@ pub extern fn PyInterpreterState_Next(?*PyInterpreterState) ?*PyInterpreterState
 pub extern fn PyInterpreterState_ThreadHead(?*PyInterpreterState) [*c]PyThreadState;
 pub extern fn PyThreadState_Next([*c]PyThreadState) [*c]PyThreadState;
 pub extern fn PyThreadState_DeleteCurrent() void;
-pub const _PyFrameEvalFunction = ?fn ([*c]PyThreadState, ?*PyFrameObject, c_int) callconv(.C) [*c]PyObject;
+pub const _PyFrameEvalFunction = ?*const fn ([*c]PyThreadState, ?*PyFrameObject, c_int) callconv(.C) [*c]PyObject;
 pub extern fn _PyInterpreterState_GetEvalFrameFunc(interp: ?*PyInterpreterState) _PyFrameEvalFunction;
 pub extern fn _PyInterpreterState_SetEvalFrameFunc(interp: ?*PyInterpreterState, eval_frame: _PyFrameEvalFunction) void;
 pub extern fn _PyInterpreterState_GetConfig(interp: ?*PyInterpreterState) [*c]const PyConfig;
@@ -4553,15 +4553,15 @@ pub const struct__xid = extern struct {
     data: ?*anyopaque,
     obj: [*c]PyObject,
     interp: i64,
-    new_object: ?fn ([*c]struct__xid) callconv(.C) [*c]PyObject,
-    free: ?fn (?*anyopaque) callconv(.C) void,
+    new_object: ?*const fn ([*c]struct__xid) callconv(.C) [*c]PyObject,
+    free: ?*const fn (?*anyopaque) callconv(.C) void,
 };
 pub const _PyCrossInterpreterData = struct__xid;
 pub extern fn _PyObject_GetCrossInterpreterData([*c]PyObject, [*c]_PyCrossInterpreterData) c_int;
 pub extern fn _PyCrossInterpreterData_NewObject([*c]_PyCrossInterpreterData) [*c]PyObject;
 pub extern fn _PyCrossInterpreterData_Release([*c]_PyCrossInterpreterData) void;
 pub extern fn _PyObject_CheckCrossInterpreterData([*c]PyObject) c_int;
-pub const crossinterpdatafunc = ?fn ([*c]PyObject, [*c]struct__xid) callconv(.C) c_int;
+pub const crossinterpdatafunc = ?*const fn ([*c]PyObject, [*c]struct__xid) callconv(.C) c_int;
 pub extern fn _PyCrossInterpreterData_RegisterClass([*c]PyTypeObject, crossinterpdatafunc) c_int;
 pub extern fn _PyCrossInterpreterData_Lookup([*c]PyObject) crossinterpdatafunc;
 pub const PyGenObject = extern struct {
@@ -4618,8 +4618,8 @@ pub extern var _PyAsyncGenAThrow_Type: PyTypeObject;
 pub extern fn PyAsyncGen_New(?*PyFrameObject, name: [*c]PyObject, qualname: [*c]PyObject) [*c]PyObject;
 pub extern fn _PyAsyncGenValueWrapperNew([*c]PyObject) [*c]PyObject;
 pub const PyGetSetDef = struct_PyGetSetDef;
-pub const wrapperfunc = ?fn ([*c]PyObject, [*c]PyObject, ?*anyopaque) callconv(.C) [*c]PyObject;
-pub const wrapperfunc_kwds = ?fn ([*c]PyObject, [*c]PyObject, ?*anyopaque, [*c]PyObject) callconv(.C) [*c]PyObject;
+pub const wrapperfunc = ?*const fn ([*c]PyObject, [*c]PyObject, ?*anyopaque) callconv(.C) [*c]PyObject;
+pub const wrapperfunc_kwds = ?*const fn ([*c]PyObject, [*c]PyObject, ?*anyopaque, [*c]PyObject) callconv(.C) [*c]PyObject;
 pub const struct_wrapperbase = extern struct {
     name: [*c]const u8,
     offset: c_int,
@@ -4987,7 +4987,7 @@ pub const PY_LOCK_INTR: c_int = 2;
 pub const enum_PyLockStatus = c_uint;
 pub const PyLockStatus = enum_PyLockStatus;
 pub extern fn PyThread_init_thread() void;
-pub extern fn PyThread_start_new_thread(?fn (?*anyopaque) callconv(.C) void, ?*anyopaque) c_ulong;
+pub extern fn PyThread_start_new_thread(?*const fn (?*anyopaque) callconv(.C) void, ?*anyopaque) c_ulong;
 pub extern fn PyThread_exit_thread() noreturn;
 pub extern fn PyThread_get_thread_ident() c_ulong;
 pub extern fn PyThread_get_thread_native_id() c_ulong;
@@ -5014,7 +5014,7 @@ pub const Py_tss_t = struct__Py_tss_t;
 pub const struct_sched_param = extern struct {
     sched_priority: c_int,
 };
-pub extern fn clone(__fn: ?fn (?*anyopaque) callconv(.C) c_int, __child_stack: ?*anyopaque, __flags: c_int, __arg: ?*anyopaque, ...) c_int;
+pub extern fn clone(__fn: ?*const fn (?*anyopaque) callconv(.C) c_int, __child_stack: ?*anyopaque, __flags: c_int, __arg: ?*anyopaque, ...) c_int;
 pub extern fn unshare(__flags: c_int) c_int;
 pub extern fn sched_getcpu() c_int;
 pub extern fn getcpu([*c]c_uint, [*c]c_uint) c_int;
@@ -5079,7 +5079,7 @@ pub const PTHREAD_PROCESS_PRIVATE: c_int = 0;
 pub const PTHREAD_PROCESS_SHARED: c_int = 1;
 const enum_unnamed_26 = c_uint;
 pub const struct__pthread_cleanup_buffer = extern struct {
-    __routine: ?fn (?*anyopaque) callconv(.C) void,
+    __routine: ?*const fn (?*anyopaque) callconv(.C) void,
     __arg: ?*anyopaque,
     __canceltype: c_int,
     __prev: [*c]struct__pthread_cleanup_buffer,
@@ -5090,7 +5090,7 @@ const enum_unnamed_27 = c_uint;
 pub const PTHREAD_CANCEL_DEFERRED: c_int = 0;
 pub const PTHREAD_CANCEL_ASYNCHRONOUS: c_int = 1;
 const enum_unnamed_28 = c_uint;
-pub extern fn pthread_create(noalias __newthread: [*c]pthread_t, noalias __attr: [*c]const pthread_attr_t, __start_routine: ?fn (?*anyopaque) callconv(.C) ?*anyopaque, noalias __arg: ?*anyopaque) c_int;
+pub extern fn pthread_create(noalias __newthread: [*c]pthread_t, noalias __attr: [*c]const pthread_attr_t, __start_routine: ?*const fn (?*anyopaque) callconv(.C) ?*anyopaque, noalias __arg: ?*anyopaque) c_int;
 pub extern fn pthread_exit(__retval: ?*anyopaque) noreturn;
 pub extern fn pthread_join(__th: pthread_t, __thread_return: [*c]?*anyopaque) c_int;
 pub extern fn pthread_tryjoin_np(__th: pthread_t, __thread_return: [*c]?*anyopaque) c_int;
@@ -5140,7 +5140,7 @@ pub extern fn pthread_setconcurrency(__level: c_int) c_int;
 pub extern fn pthread_yield() c_int;
 pub extern fn pthread_setaffinity_np(__th: pthread_t, __cpusetsize: usize, __cpuset: [*c]const cpu_set_t) c_int;
 pub extern fn pthread_getaffinity_np(__th: pthread_t, __cpusetsize: usize, __cpuset: [*c]cpu_set_t) c_int;
-pub extern fn pthread_once(__once_control: [*c]pthread_once_t, __init_routine: ?fn () callconv(.C) void) c_int;
+pub extern fn pthread_once(__once_control: [*c]pthread_once_t, __init_routine: ?*const fn () callconv(.C) void) c_int;
 pub extern fn pthread_setcancelstate(__state: c_int, __oldstate: [*c]c_int) c_int;
 pub extern fn pthread_setcanceltype(__type: c_int, __oldtype: [*c]c_int) c_int;
 pub extern fn pthread_cancel(__th: pthread_t) c_int;
@@ -5154,7 +5154,7 @@ pub const __pthread_unwind_buf_t = extern struct {
     __pad: [4]?*anyopaque,
 };
 pub const struct___pthread_cleanup_frame = extern struct {
-    __cancel_routine: ?fn (?*anyopaque) callconv(.C) void,
+    __cancel_routine: ?*const fn (?*anyopaque) callconv(.C) void,
     __cancel_arg: ?*anyopaque,
     __do_it: c_int,
     __cancel_type: c_int,
@@ -5232,12 +5232,12 @@ pub extern fn pthread_barrierattr_init(__attr: [*c]pthread_barrierattr_t) c_int;
 pub extern fn pthread_barrierattr_destroy(__attr: [*c]pthread_barrierattr_t) c_int;
 pub extern fn pthread_barrierattr_getpshared(noalias __attr: [*c]const pthread_barrierattr_t, noalias __pshared: [*c]c_int) c_int;
 pub extern fn pthread_barrierattr_setpshared(__attr: [*c]pthread_barrierattr_t, __pshared: c_int) c_int;
-pub extern fn pthread_key_create(__key: [*c]pthread_key_t, __destr_function: ?fn (?*anyopaque) callconv(.C) void) c_int;
+pub extern fn pthread_key_create(__key: [*c]pthread_key_t, __destr_function: ?*const fn (?*anyopaque) callconv(.C) void) c_int;
 pub extern fn pthread_key_delete(__key: pthread_key_t) c_int;
 pub extern fn pthread_getspecific(__key: pthread_key_t) ?*anyopaque;
 pub extern fn pthread_setspecific(__key: pthread_key_t, __pointer: ?*const anyopaque) c_int;
 pub extern fn pthread_getcpuclockid(__thread_id: pthread_t, __clock_id: [*c]__clockid_t) c_int;
-pub extern fn pthread_atfork(__prepare: ?fn () callconv(.C) void, __parent: ?fn () callconv(.C) void, __child: ?fn () callconv(.C) void) c_int;
+pub extern fn pthread_atfork(__prepare: ?*const fn () callconv(.C) void, __parent: ?*const fn () callconv(.C) void, __child: ?*const fn () callconv(.C) void) c_int;
 pub extern fn PyThread_tss_alloc() [*c]Py_tss_t;
 pub extern fn PyThread_tss_free(key: [*c]Py_tss_t) void;
 pub extern fn PyThread_tss_is_created(key: [*c]Py_tss_t) c_int;
@@ -5379,8 +5379,8 @@ pub extern fn PyRun_File(fp: [*c]FILE, p: [*c]const u8, s: c_int, g: [*c]PyObjec
 pub extern fn PyRun_FileEx(fp: [*c]FILE, p: [*c]const u8, s: c_int, g: [*c]PyObject, l: [*c]PyObject, c: c_int) [*c]PyObject;
 pub extern fn PyRun_FileFlags(fp: [*c]FILE, p: [*c]const u8, s: c_int, g: [*c]PyObject, l: [*c]PyObject, flags: [*c]PyCompilerFlags) [*c]PyObject;
 pub extern fn PyOS_Readline([*c]FILE, [*c]FILE, [*c]const u8) [*c]u8;
-pub extern var PyOS_InputHook: ?fn () callconv(.C) c_int;
-pub extern var PyOS_ReadlineFunctionPointer: ?fn ([*c]FILE, [*c]FILE, [*c]const u8) callconv(.C) [*c]u8;
+pub extern var PyOS_InputHook: ?*const fn () callconv(.C) c_int;
+pub extern var PyOS_ReadlineFunctionPointer: ?*const fn ([*c]FILE, [*c]FILE, [*c]const u8) callconv(.C) [*c]u8;
 pub extern var _PyOS_ReadlineTState: [*c]PyThreadState;
 pub extern fn Py_Initialize() void;
 pub extern fn Py_InitializeEx(c_int) void;
@@ -5389,7 +5389,7 @@ pub extern fn Py_FinalizeEx() c_int;
 pub extern fn Py_IsInitialized() c_int;
 pub extern fn Py_NewInterpreter() [*c]PyThreadState;
 pub extern fn Py_EndInterpreter([*c]PyThreadState) void;
-pub extern fn Py_AtExit(func: ?fn () callconv(.C) void) c_int;
+pub extern fn Py_AtExit(func: ?*const fn () callconv(.C) void) c_int;
 pub extern fn Py_Exit(c_int) noreturn;
 pub extern fn Py_Main(argc: c_int, argv: [*c][*c]wchar_t) c_int;
 pub extern fn Py_FrozenMain(argc: c_int, argv: [*c][*c]u8) c_int;
@@ -5408,7 +5408,7 @@ pub extern fn Py_GetPlatform() [*c]const u8;
 pub extern fn Py_GetCopyright() [*c]const u8;
 pub extern fn Py_GetCompiler() [*c]const u8;
 pub extern fn Py_GetBuildInfo() [*c]const u8;
-pub const PyOS_sighandler_t = ?fn (c_int) callconv(.C) void;
+pub const PyOS_sighandler_t = ?*const fn (c_int) callconv(.C) void;
 pub extern fn PyOS_getsig(c_int) PyOS_sighandler_t;
 pub extern fn PyOS_setsig(c_int, PyOS_sighandler_t) PyOS_sighandler_t;
 pub extern fn Py_SetStandardStreamEncoding(encoding: [*c]const u8, errors: [*c]const u8) c_int;
@@ -5420,7 +5420,7 @@ pub extern fn Py_InitializeFromConfig(config: [*c]const PyConfig) PyStatus;
 pub extern fn _Py_InitializeMain() PyStatus;
 pub extern fn Py_RunMain() c_int;
 pub extern fn Py_ExitStatusException(err: PyStatus) noreturn;
-pub extern fn _Py_PyAtExit(func: ?fn ([*c]PyObject) callconv(.C) void, [*c]PyObject) void;
+pub extern fn _Py_PyAtExit(func: ?*const fn ([*c]PyObject) callconv(.C) void, [*c]PyObject) void;
 pub extern fn _Py_RestoreSignals() void;
 pub extern fn Py_FdIsInteractive([*c]FILE, [*c]const u8) c_int;
 pub extern fn _Py_SetProgramFullPath([*c]const wchar_t) void;
@@ -5440,7 +5440,7 @@ pub extern fn PyEval_GetBuiltins() [*c]PyObject;
 pub extern fn PyEval_GetGlobals() [*c]PyObject;
 pub extern fn PyEval_GetLocals() [*c]PyObject;
 pub extern fn PyEval_GetFrame() ?*PyFrameObject;
-pub extern fn Py_AddPendingCall(func: ?fn (?*anyopaque) callconv(.C) c_int, arg: ?*anyopaque) c_int;
+pub extern fn Py_AddPendingCall(func: ?*const fn (?*anyopaque) callconv(.C) c_int, arg: ?*anyopaque) c_int;
 pub extern fn Py_MakePendingCalls() c_int;
 pub extern fn Py_SetRecursionLimit(c_int) void;
 pub extern fn Py_GetRecursionLimit() c_int;
@@ -5493,7 +5493,7 @@ pub extern fn PySys_GetXOptions() [*c]PyObject;
 pub extern fn _PySys_GetObjectId(key: [*c]_Py_Identifier) [*c]PyObject;
 pub extern fn _PySys_SetObjectId(key: [*c]_Py_Identifier, [*c]PyObject) c_int;
 pub extern fn _PySys_GetSizeOf([*c]PyObject) usize;
-pub const Py_AuditHookFunction = ?fn ([*c]const u8, [*c]PyObject, ?*anyopaque) callconv(.C) c_int;
+pub const Py_AuditHookFunction = ?*const fn ([*c]const u8, [*c]PyObject, ?*anyopaque) callconv(.C) c_int;
 pub extern fn PySys_Audit(event: [*c]const u8, argFormat: [*c]const u8, ...) c_int;
 pub extern fn PySys_AddAuditHook(Py_AuditHookFunction, ?*anyopaque) c_int;
 pub extern fn PyOS_FSPath(path: [*c]PyObject) [*c]PyObject;
@@ -5524,7 +5524,7 @@ pub extern fn PyImport_Import(name: [*c]PyObject) [*c]PyObject;
 pub extern fn PyImport_ReloadModule(m: [*c]PyObject) [*c]PyObject;
 pub extern fn PyImport_ImportFrozenModuleObject(name: [*c]PyObject) c_int;
 pub extern fn PyImport_ImportFrozenModule(name: [*c]const u8) c_int;
-pub extern fn PyImport_AppendInittab(name: [*c]const u8, initfunc: ?fn () callconv(.C) [*c]PyObject) c_int;
+pub extern fn PyImport_AppendInittab(name: [*c]const u8, initfunc: ?*const fn () callconv(.C) [*c]PyObject) c_int;
 pub extern fn PyInit__imp() [*c]PyObject;
 pub extern fn _PyImport_IsInitialized(?*PyInterpreterState) c_int;
 pub extern fn _PyImport_GetModuleId(name: [*c]struct__Py_Identifier) [*c]PyObject;
@@ -5537,7 +5537,7 @@ pub extern fn _PyImport_FixupBuiltin(mod: [*c]PyObject, name: [*c]const u8, modu
 pub extern fn _PyImport_FixupExtensionObject([*c]PyObject, [*c]PyObject, [*c]PyObject, [*c]PyObject) c_int;
 pub const struct__inittab = extern struct {
     name: [*c]const u8,
-    initfunc: ?fn () callconv(.C) [*c]PyObject,
+    initfunc: ?*const fn () callconv(.C) [*c]PyObject,
 };
 pub extern var PyImport_Inittab: [*c]struct__inittab;
 pub extern fn PyImport_ExtendInittab(newtab: [*c]struct__inittab) c_int;
@@ -5861,7 +5861,7 @@ pub extern const _Py_ctype_tolower: [256]u8;
 pub extern const _Py_ctype_toupper: [256]u8;
 pub extern fn PyOS_string_to_double(str: [*c]const u8, endptr: [*c][*c]u8, overflow_exception: [*c]PyObject) f64;
 pub extern fn PyOS_double_to_string(val: f64, format_code: u8, precision: c_int, flags: c_int, @"type": [*c]c_int) [*c]u8;
-pub extern fn _Py_string_to_number_with_underscores(str: [*c]const u8, len: Py_ssize_t, what: [*c]const u8, obj: [*c]PyObject, arg: ?*anyopaque, innerfunc: ?fn ([*c]const u8, Py_ssize_t, ?*anyopaque) callconv(.C) [*c]PyObject) [*c]PyObject;
+pub extern fn _Py_string_to_number_with_underscores(str: [*c]const u8, len: Py_ssize_t, what: [*c]const u8, obj: [*c]PyObject, arg: ?*anyopaque, innerfunc: ?*const fn ([*c]const u8, Py_ssize_t, ?*anyopaque) callconv(.C) [*c]PyObject) [*c]PyObject;
 pub extern fn _Py_parse_inf_or_nan(p: [*c]const u8, endptr: [*c][*c]u8) f64;
 pub extern fn PyOS_mystrnicmp([*c]const u8, [*c]const u8, Py_ssize_t) c_int;
 pub extern fn PyOS_mystricmp([*c]const u8, [*c]const u8) c_int;
@@ -8578,11 +8578,9 @@ pub inline fn __MATH_EVAL_FMT2(x: anytype, y: anytype) @TypeOf((x + y) + @as(f32
     return (x + y) + @as(f32, 0.0);
 }
 pub inline fn iseqsig(x: anytype, y: anytype) @TypeOf(__MATH_TG(__MATH_EVAL_FMT2(x, y), __iseqsig, blk: {
-    _ = x;
     break :blk y;
 })) {
     return __MATH_TG(__MATH_EVAL_FMT2(x, y), __iseqsig, blk: {
-        _ = x;
         break :blk y;
     });
 }
