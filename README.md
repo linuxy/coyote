@@ -5,6 +5,10 @@ Builds against zig 0.10.0+
 
 ```git clone --recursive https://github.com/linuxy/coyote.git```
 
+To build:
+* zig build iwnet
+* zig build
+
 Example:
 ```Zig
 const std = @import("std");
