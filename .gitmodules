@@ -4,9 +4,3 @@
 [submodule "vendor/zq"]
 	path = vendor/zq
 	url = https://github.com/frmdstryr/zq.git
-[submodule "vendor/Pyrseas"]
-	path = vendor/Pyrseas
-	url = https://github.com/perseas/Pyrseas.git
-[submodule "vendor/zig-yaml"]
-	path = vendor/zig-yaml
-	url = https://github.com/kubkon/zig-yaml.git
