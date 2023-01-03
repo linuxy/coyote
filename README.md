@@ -5,6 +5,9 @@ Builds against zig 0.11.0-dev.944+a193ec432+
 
 ```git clone --recursive https://github.com/linuxy/coyote.git```
 
+Required packages: (python 3.10)
+* python3 python3-jinja2
+
 To build:
 * zig build iwnet
 * zig build
