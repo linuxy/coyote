@@ -1,7 +1,7 @@
 # coyote
 a small poc web framework w/ jinja2 bolted onto iwnet
 
-Builds against zig 0.10.0+
+Builds against zig 0.11.0-dev.944+a193ec432+
 
 ```git clone --recursive https://github.com/linuxy/coyote.git```
 

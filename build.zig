@@ -31,8 +31,8 @@ pub fn build(b: *std.build.Builder) void {
     exe.addPackage(pkgs.iwnet);
     exe.addPackage(pkgs.zq);
     exe.addPackage(pkgs.coyote);
-    exe.addIncludePath("/usr/include/python3.9");
-    exe.linkSystemLibrary("python3.9");
+    exe.addIncludePath("/usr/include/python3.10");
+    exe.linkSystemLibrary("python3.10");
 
     exe.addLibraryPath("./vendor/iwnet/build/src");
     exe.addLibraryPath("./vendor/iwnet/build/lib");

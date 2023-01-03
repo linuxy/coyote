@@ -322,7 +322,7 @@ pub fn run(self: *Coyote) !void {
 pub fn deinit(self: *Coyote) void {
     var iter = cache.?.jinja.iterator();
     while(iter.next()) |kv| {
-        jinja.free_environment(kv.value_ptr);
+        jinja.free_environment(kv.value_ptr.*);
     }
     if(db_engine != null)
         db_engine.?.deinit();
