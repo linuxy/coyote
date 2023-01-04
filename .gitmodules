@@ -4,3 +4,6 @@
 [submodule "vendor/zq"]
 	path = vendor/zq
 	url = https://github.com/linuxy/zq.git
+[submodule "vendor/mustache"]
+	path = vendor/mustache
+	url = https://github.com/batiati/mustache-zig.git

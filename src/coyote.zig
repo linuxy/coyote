@@ -1,5 +1,5 @@
 const std = @import("std");
-const jinja = @import("jinja");
+const mustache = @import("mustache");
 const http = @import("iwnet");
 const db = @import("zq");
 
@@ -29,9 +29,8 @@ pub var db_engine: ?db.Engine(.postgres) = undefined;
 pub var db_conn: ?db.Connection = undefined;
 
 //rework for async // one env per thread
-var jinja_env: ?*anyopaque = undefined;
 var template_lock: std.Thread.Mutex = .{};
-pub var jinja_cache: *std.AutoHashMap(u64, [*c]jinja.PyObject) = undefined;
+pub var mustache_cache: *std.AutoHashMap(u64, *mustache.Template) = undefined;
 var template_directory: [*:0]const u8 = undefined;
 var cache: ?*Cache = undefined;
 
@@ -60,13 +59,11 @@ pub fn init() !Coyote {
 }
  
 const Cache = struct {
-    template: std.AutoHashMap([*:0]const u8, ?*anyopaque),
-    jinja: std.AutoHashMap(u64, [*c]jinja.PyObject),
+    template: std.StringHashMap(mustache.Template),
 
     pub fn init() Cache {
         return Cache {
-            .jinja = std.AutoHashMap(u64, [*c]jinja.PyObject).init(allocator),
-            .template = std.AutoHashMap([*:0]const u8, ?*anyopaque).init(allocator),
+            .template = std.StringHashMap(mustache.Template).init(allocator),
         };
     }
 };
@@ -111,60 +108,47 @@ pub fn templates(self: *Coyote, directory: [*:0]const u8) !void {
 }
 
 const Rendered = struct {
-    data: [*c]const u8,
-    len: usize,
+    data: []const u8,
+    allocator: std.mem.Allocator,
+
+    pub fn deinit(self: *@This()) void {
+        self.allocator.free(self.data);
+    }
 };
 
 //Render templates with value dictionary, supports ?*value, *value, ?value, value
-pub fn render(path: [*:0]const u8, vars: anytype) Rendered {
-    template_lock.lock(); //TODO: Fix
-    var template_cache = cache.?.template.get(path);
-    var template: ?*anyopaque = undefined;
-    var env_cache: [*c]jinja.PyObject = if(cache.?.jinja.get(std.Thread.getCurrentId()) == null) null else cache.?.jinja.get(std.Thread.getCurrentId()).?;
+pub fn render(path: []const u8, vars: anytype) Rendered {
+    
+    const template = blk: {
+        template_lock.lock(); //TODO: Fix
+        defer template_lock.unlock();
+        var template_cache = cache.?.template.get(path);
 
-    if(env_cache == null) {
-        env_cache = jinja.init_environment(template_directory);
-        cache.?.jinja.put(std.Thread.getCurrentId(), env_cache) catch unreachable;
-    }
+        if(template_cache == null) {
 
-    if(template_cache != null) {
-        template = template_cache.?;
-    } else {
-        jinja_env = jinja.init_environment(template_directory);
-        template = jinja.get_template(env_cache, path);
-        cache.?.template.put(path, template) catch unreachable;
-    }
+            const absolute_path = std.fs.cwd().realpathAlloc(allocator, path) catch unreachable;
+            defer allocator.free(absolute_path);           
+            const result = mustache.parseFile(allocator, absolute_path, .{}, .{}) catch {
+                // TODO: Handle file errors here:
+                unreachable;
+            };
 
-    var vars_array: [@typeInfo(@TypeOf(vars)).Struct.fields.len * 2][*:0]const u8 = undefined;
+            template_cache = switch (result) {
+                .parse_error => |parse_error| {
+                    // TODO: Handle parser errors here:
+                    _ = parse_error;
+                    unreachable;
+                },
+                .success => |template| template,
+            };
 
-    var i: usize = 0;
-    inline for (std.meta.fields(@TypeOf(vars))) |member| {
-        //log.info("member name: {s} value: {s} total: {}, idx: {}", .{member.name, @field(vars, member.name), @typeInfo(@TypeOf(vars)).Struct.fields.len, i});
-        vars_array[i] = @ptrCast([*:0]const u8, member.name);
-        
-        if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Pointer) {
-            if(@typeInfo(@TypeOf(@field(vars, member.name).*)) == .Optional) {
-                vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name).*.?);
-            } else if(@typeInfo(@TypeOf(@field(vars, member.name).*)) == .Pointer) {
-                vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name).*);
-            } else {
-                vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name));
-            }
-        } else if(@typeInfo(@TypeOf(@field(vars, member.name))) == .Optional and @field(vars, member.name) != null) {
-            vars_array[i + 1] = @ptrCast([*:0]const u8, @field(vars, member.name).?);
-        } else {
-            vars_array[i + 1] = @ptrCast([*:0]const u8, &@field(vars, member.name));
+            cache.?.template.put(path, template_cache.?) catch unreachable;
         }
+        break :blk template_cache.?;
+    };
 
-        i += 2;
-    }
-
-    var rendered = jinja.render(@ptrCast(?*anyopaque, template), @as(c_int, @typeInfo(@TypeOf(vars)).Struct.fields.len * 2), @ptrCast([*c][*:0]const u8, &vars_array));
-    var rendered_utf8 = std.mem.span(jinja.PyUnicode_AsUTF8(rendered));
-    template_lock.unlock();
-
-    jinja._Py_DECREF(rendered);
-    return .{.data = @ptrCast([*:0]const u8, rendered_utf8), .len = rendered_utf8.len};
+    const rendered = mustache.allocRenderZ(allocator, template, vars) catch unreachable;
+    return .{.data = rendered, .allocator = allocator };
 }
 
 pub fn response(req: [*c]http.iwn_wf_req, code: u32, mime: []const u8, body: [*c]const u8, body_len: ?usize, user_data: ?*anyopaque) !void {
@@ -320,9 +304,9 @@ pub fn run(self: *Coyote) !void {
 
 //Destruct any allocations
 pub fn deinit(self: *Coyote) void {
-    var iter = cache.?.jinja.iterator();
+    var iter = cache.?.template.iterator();
     while(iter.next()) |kv| {
-        jinja.free_environment(kv.value_ptr.*);
+        kv.value_ptr.deinit(allocator);
     }
     
     if(db_engine != null)
