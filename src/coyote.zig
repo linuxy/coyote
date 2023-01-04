@@ -31,7 +31,7 @@ pub var db_conn: ?db.Connection = undefined;
 //rework for async // one env per thread
 var jinja_env: ?*anyopaque = undefined;
 var template_lock: std.Thread.Mutex = .{};
-pub var jinja_cache: *std.AutoHashMap(u64, ?*anyopaque) = undefined;
+pub var jinja_cache: *std.AutoHashMap(u64, [*c]jinja.PyObject) = undefined;
 var template_directory: [*:0]const u8 = undefined;
 var cache: ?*Cache = undefined;
 
@@ -61,11 +61,11 @@ pub fn init() !Coyote {
  
 const Cache = struct {
     template: std.AutoHashMap([*:0]const u8, ?*anyopaque),
-    jinja: std.AutoHashMap(u64, ?*anyopaque),
+    jinja: std.AutoHashMap(u64, [*c]jinja.PyObject),
 
     pub fn init() Cache {
         return Cache {
-            .jinja = std.AutoHashMap(u64, ?*anyopaque).init(allocator),
+            .jinja = std.AutoHashMap(u64, [*c]jinja.PyObject).init(allocator),
             .template = std.AutoHashMap([*:0]const u8, ?*anyopaque).init(allocator),
         };
     }
@@ -120,7 +120,7 @@ pub fn render(path: [*:0]const u8, vars: anytype) Rendered {
     template_lock.lock(); //TODO: Fix
     var template_cache = cache.?.template.get(path);
     var template: ?*anyopaque = undefined;
-    var env_cache: ?*anyopaque = if(cache.?.jinja.get(std.Thread.getCurrentId()) == null) null else cache.?.jinja.get(std.Thread.getCurrentId()).?;
+    var env_cache: [*c]jinja.PyObject = if(cache.?.jinja.get(std.Thread.getCurrentId()) == null) null else cache.?.jinja.get(std.Thread.getCurrentId()).?;
 
     if(env_cache == null) {
         env_cache = jinja.init_environment(template_directory);
@@ -324,6 +324,7 @@ pub fn deinit(self: *Coyote) void {
     while(iter.next()) |kv| {
         jinja.free_environment(kv.value_ptr.*);
     }
+    
     if(db_engine != null)
         db_engine.?.deinit();
 

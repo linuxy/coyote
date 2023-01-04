@@ -5907,7 +5907,7 @@ pub extern fn _Py_set_blocking(fd: c_int, blocking: c_int) c_int;
 pub extern fn PyTraceMalloc_Track(domain: c_uint, ptr: usize, size: usize) c_int;
 pub extern fn PyTraceMalloc_Untrack(domain: c_uint, ptr: usize) c_int;
 pub extern fn _PyTraceMalloc_GetTraceback(domain: c_uint, ptr: usize) [*c]PyObject;
-pub export fn init_environment(arg_template_dir: [*c]const u8) ?*anyopaque {
+pub export fn init_environment(arg_template_dir: [*c]const u8) [*c]PyObject {
     var template_dir = arg_template_dir;
     var pString: [*c]PyObject = undefined;
     var pmodEnvironment: [*c]PyObject = undefined;
@@ -5927,7 +5927,7 @@ pub export fn init_environment(arg_template_dir: [*c]const u8) ?*anyopaque {
         _ = fprintf(stderr, "Error finding module jinja2\n");
         PyErr_Print();
         Py_Finalize();
-        return @intToPtr(?*anyopaque, @as(c_int, 0));
+        return @as(c_int, 0);
     }
     pString = PyUnicode_FromString("jinja2.loaders");
     pmodFileSystemLoader = PyImport_Import(pString);
@@ -5936,7 +5936,7 @@ pub export fn init_environment(arg_template_dir: [*c]const u8) ?*anyopaque {
         _ = fprintf(stderr, "Error finding module jinja2\n");
         PyErr_Print();
         Py_Finalize();
-        return @intToPtr(?*anyopaque, @as(c_int, 0));
+        return @as(c_int, 0);
     }
     pDict = PyModule_GetDict(pmodEnvironment);
     pClassEnv = PyDict_GetItemString(pDict, "Environment");
@@ -5946,7 +5946,7 @@ pub export fn init_environment(arg_template_dir: [*c]const u8) ?*anyopaque {
         _Py_DECREF(pmodEnvironment);
         _Py_DECREF(pmodFileSystemLoader);
         Py_Finalize();
-        return @intToPtr(?*anyopaque, @as(c_int, 0));
+        return @as(c_int, 0);
     }
     pDict = PyModule_GetDict(pmodFileSystemLoader);
     pClassFLoader = PyDict_GetItemString(pDict, "FileSystemLoader");
@@ -5957,7 +5957,7 @@ pub export fn init_environment(arg_template_dir: [*c]const u8) ?*anyopaque {
         _Py_DECREF(pmodEnvironment);
         _Py_DECREF(pmodFileSystemLoader);
         Py_Finalize();
-        return @intToPtr(?*anyopaque, @as(c_int, 0));
+        return @as(c_int, 0);
     }
     pArgs = Py_BuildValue("(s)", template_dir);
     pFileLoader = PyObject_Call(pClassFLoader, pArgs, null);
@@ -5969,7 +5969,7 @@ pub export fn init_environment(arg_template_dir: [*c]const u8) ?*anyopaque {
         _Py_DECREF(pClassFLoader);
         _Py_DECREF(pmodEnvironment);
         _Py_DECREF(pmodFileSystemLoader);
-        return @intToPtr(?*anyopaque, @as(c_int, 0));
+        return @as(c_int, 0);
     }
     empty_tuple = PyTuple_New(@bitCast(Py_ssize_t, @as(c_long, @as(c_int, 0))));
     pArgs = Py_BuildValue("{sO}", "loader", pFileLoader);
@@ -5984,14 +5984,14 @@ pub export fn init_environment(arg_template_dir: [*c]const u8) ?*anyopaque {
         _Py_DECREF(pClassFLoader);
         _Py_DECREF(pmodEnvironment);
         _Py_DECREF(pmodFileSystemLoader);
-        return @intToPtr(?*anyopaque, @as(c_int, 0));
+        return @as(c_int, 0);
     }
     _Py_DECREF(pFileLoader);
     _Py_DECREF(pClassEnv);
     _Py_DECREF(pClassFLoader);
     _Py_DECREF(pmodEnvironment);
     _Py_DECREF(pmodFileSystemLoader);
-    return @ptrCast(?*anyopaque, ret_env);
+    return ret_env;
 }
 pub export fn render(arg_tmpl: ?*anyopaque, arg_count: c_int, arg_args: [*c][*:0]const u8) [*c]PyObject {
     var tmpl = arg_tmpl;
@@ -6041,15 +6041,16 @@ pub export fn render(arg_tmpl: ?*anyopaque, arg_count: c_int, arg_args: [*c][*:0
 
     return retval;
 }
-pub export fn free_environment(arg_env: ?*anyopaque) void {
+
+//Leaks? finalize blocks, pending tasks likely
+pub export fn free_environment(arg_env: [*c]PyObject) void {
     var env = arg_env;
-    var pEnv: [*c]PyObject = @ptrCast([*c]PyObject, @alignCast(@import("std").meta.alignment(PyObject), env));
-    if (pEnv != null) {
-        _Py_DECREF(pEnv);
-        Py_Finalize();
+    if (env != null) {
+        _Py_DECREF(env);
     }
 }
-pub export fn get_template(arg_env: ?*anyopaque, arg_template_name: [*c]const u8) ?*anyopaque {
+
+pub export fn get_template(arg_env: ?*anyopaque, arg_template_name: [*c]const u8) [*c]PyObject {
     var env = arg_env;
     var template_name = arg_template_name;
     var retval: [*c]PyObject = undefined;
@@ -6057,9 +6058,9 @@ pub export fn get_template(arg_env: ?*anyopaque, arg_template_name: [*c]const u8
     retval = PyObject_CallMethod(pEnv, "get_template", "(s)", template_name);
     if (!(retval != null)) {
         _ = fprintf(stderr, "Could not load template %s\n", template_name);
-        return @intToPtr(?*anyopaque, @as(c_int, 0));
+        return @as(c_int, 0);
     }
-    return @ptrCast(?*anyopaque, retval);
+    return retval;
 }
 pub export fn list_templates(arg_env: ?*anyopaque) void {
     var env = arg_env;
@@ -6118,7 +6119,7 @@ pub export fn jinjify(arg_argc: c_int, arg_argv: [*c][*c]u8) c_int {
     if (rendered != null) {
         _ = printf("%s\n", PyUnicode_AsUTF8(rendered));
     }
-    free_environment(@ptrCast(?*anyopaque, env));
+    free_environment(env);
     return 0;
 }
 pub const __INTMAX_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `L`"); // (no file):67:9
@@ -7918,6 +7919,7 @@ pub inline fn FD_ISSET(fd: anytype, fdsetp: anytype) @TypeOf(__FD_ISSET(fd, fdse
 pub inline fn FD_ZERO(fdsetp: anytype) @TypeOf(__FD_ZERO(fdsetp)) {
     return __FD_ZERO(fdsetp);
 }
+
 pub const __blksize_t_defined = "";
 pub const __blkcnt_t_defined = "";
 pub const __fsblkcnt_t_defined = "";
