@@ -1,9 +1,9 @@
 const std = @import("std");
 
 const pkgs = struct {
-    const jinja = std.build.Pkg{
-        .name = "jinja",
-        .source = .{ .path = "./vendor/jinja2.zig" },
+    const mustache = std.build.Pkg{
+        .name = "mustache",
+        .source = .{ .path = "./vendor/mustache/src/mustache.zig" },
     };
     const iwnet = std.build.Pkg{
         .name = "iwnet",
@@ -16,7 +16,7 @@ const pkgs = struct {
     const coyote = std.build.Pkg{
         .name = "coyote",
         .source = .{ .path = "./src/coyote.zig" },
-        .dependencies = &[_]std.build.Pkg{ pkgs.iwnet, pkgs.jinja, pkgs.zq },
+        .dependencies = &[_]std.build.Pkg{ pkgs.iwnet, pkgs.mustache, pkgs.zq },
     };
 };
 
@@ -25,17 +25,16 @@ pub fn build(b: *std.build.Builder) void {
 
     const iwnet = build_iwnet(b);
 
-    const exe = b.addExecutable("example_echo", "examples/coyote_echo.zig");
+    const exe = b.addExecutable("example_template", "examples/coyote_template.zig");
     exe.setBuildMode(mode);
-    exe.addPackage(pkgs.jinja);
+    exe.addPackage(pkgs.mustache);
     exe.addPackage(pkgs.iwnet);
     exe.addPackage(pkgs.zq);
     exe.addPackage(pkgs.coyote);
-    exe.addIncludePath("/usr/include/python3.10");
-    exe.linkSystemLibrary("python3.10");
 
     exe.addLibraryPath("./vendor/iwnet/build/src");
     exe.addLibraryPath("./vendor/iwnet/build/lib");
+    exe.addLibraryPath("./vendor/iwnet/build/lib64");
     exe.linkSystemLibrary("iwnet-1");
     exe.linkSystemLibrary("iowow-1");
 
