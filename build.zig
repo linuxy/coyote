@@ -51,9 +51,7 @@ pub fn build(b: *std.build.Builder) void {
     run_step.dependOn(&run_cmd.step);
 }
 
-
 fn build_iwnet(b: *std.build.Builder) *std.build.RunStep {
-
     const mkdir = b.addSystemCommand(
         &[_][]const u8{
             "mkdir",
