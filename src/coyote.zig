@@ -31,11 +31,11 @@ pub var db_conn: ?db.Connection = undefined;
 //rework for async // one env per thread
 var template_lock: std.Thread.Mutex = .{};
 pub var mustache_cache: *std.AutoHashMap(u64, *mustache.Template) = undefined;
-var template_directory: [*:0]const u8 = undefined;
+var template_directory: []const u8 = undefined;
 var cache: ?*Cache = undefined;
 
 var act = std.os.Sigaction{
-    .handler = .{.sigaction = signalHandler },
+    .handler = .{ .sigaction = signalHandler },
     .mask = std.os.empty_sigset,
     .flags = 0,
 };
@@ -57,29 +57,29 @@ pub fn init() !Coyote {
     cache.?.* = Cache.init();
     return Coyote{};
 }
- 
+
 const Cache = struct {
     template: std.StringHashMap(mustache.Template),
 
     pub fn init() Cache {
-        return Cache {
+        return Cache{
             .template = std.StringHashMap(mustache.Template).init(allocator),
         };
     }
 };
 
-var global_fn: ?*const fn(req: Request, data: Data) u32 = undefined;
+var global_fn: ?*const fn (req: Request, data: Data) u32 = undefined;
 
 //This removes the callconv requirement
 //TODO: Unpack and repack the Request struct w/ Zig types
-pub fn Handler(callback_fn: ?*const fn(req: Request, user_data: Data) u32) ?*const fn(req: Request, user_data: Data) callconv (.C) c_int {
+pub fn Handler(callback_fn: ?*const fn (req: Request, user_data: Data) u32) ?*const fn (req: Request, user_data: Data) callconv(.C) c_int {
     global_fn = callback_fn;
 
     const cb = struct {
         pub fn cb(
             req: Request,
             user_data: Data,
-        ) callconv (.C) c_int {
+        ) callconv(.C) c_int {
             return @intCast(c_int, global_fn.?(req, user_data));
         }
     }.cb;
@@ -102,7 +102,7 @@ pub fn save(model: anytype) !void {
     _ = model;
 }
 
-pub fn templates(self: *Coyote, directory: [*:0]const u8) !void {
+pub fn templates(self: *Coyote, directory: []const u8) !void {
     template_directory = directory;
     _ = self;
 }
@@ -117,82 +117,87 @@ const Rendered = struct {
 };
 
 //Render templates with value dictionary, supports ?*value, *value, ?value, value
-pub fn render(path: []const u8, vars: anytype) Rendered {
-    
-    const template = blk: {
+pub fn render(template_name: []const u8, vars: anytype) Rendered {
+    const template = cache.?.template.get(template_name) orelse template: {
+        log.info("Loading template {s}", .{template_name});
         template_lock.lock(); //TODO: Fix
         defer template_lock.unlock();
-        var template_cache = cache.?.template.get(path);
+        break :template cache.?.template.get(template_name) orelse cache: {
+            var path_buffer: [std.fs.MAX_NAME_BYTES]u8 = undefined;
+            var fba = std.heap.FixedBufferAllocator.init(&path_buffer);
+            const path = std.fs.path.join(fba.allocator(), &.{ template_directory, template_name }) catch unreachable;
 
-        if(template_cache == null) {
-
-            const absolute_path = std.fs.cwd().realpathAlloc(allocator, path) catch unreachable;
-            defer allocator.free(absolute_path);           
+            var absolute_path_buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+            const absolute_path = std.fs.cwd().realpath(path, &absolute_path_buffer) catch unreachable;
             const result = mustache.parseFile(allocator, absolute_path, .{}, .{}) catch {
                 // TODO: Handle file errors here:
                 unreachable;
             };
 
-            template_cache = switch (result) {
-                .parse_error => |parse_error| {
-                    // TODO: Handle parser errors here:
-                    _ = parse_error;
-                    unreachable;
-                },
+            const template_cache = switch (result) {
                 .success => |template| template,
+                .parse_error => |detail| {
+                    // TODO: Handle parser errors here:
+                    const message = std.fmt.allocPrintZ(allocator, "Template {s} error {s} at lin {}, col {}", .{
+                        template_name,
+                        @errorName(detail.parse_error),
+                        detail.lin,
+                        detail.col,
+                    }) catch unreachable;
+                    return .{ .data = message, .allocator = allocator };
+                },
             };
 
-            cache.?.template.put(path, template_cache.?) catch unreachable;
-        }
-        break :blk template_cache.?;
+            cache.?.template.put(template_name, template_cache) catch unreachable;
+            break :cache template_cache;
+        };
     };
 
     const rendered = mustache.allocRenderZ(allocator, template, vars) catch unreachable;
-    return .{.data = rendered, .allocator = allocator };
+    return .{ .data = rendered, .allocator = allocator };
 }
 
 pub fn response(req: [*c]http.iwn_wf_req, code: u32, mime: []const u8, body: [*c]const u8, body_len: ?usize, user_data: ?*anyopaque) !void {
-    _ = http.iwn_http_response_printf(req.*.http, @intCast(c_int, code), @ptrCast([*c]const u8, mime), "%.*s\n",
-                                body_len.?, body, @ptrCast([*c]const u8, &user_data));
+    _ = http.iwn_http_response_printf(req.*.http, @intCast(c_int, code), @ptrCast([*c]const u8, mime), "%.*s\n", body_len.?, body, @ptrCast([*c]const u8, &user_data));
 }
 
 //Dynamically build routes from loaded template directory
 pub fn routes(self: *Coyote) !void {
     var route: http.struct_iwn_wf_route = undefined;
     var route_pattern: ?[]const u8 = null;
-    var route_handler: ?*const fn(req: Request, data: Data) callconv(.C) c_int = undefined;
+    var route_handler: ?*const fn (req: Request, data: Data) callconv(.C) c_int = null;
     var route_flags: u32 = undefined;
 
     inline for (@typeInfo(@import("root")).Struct.decls) |decl| {
         const idx = comptime std.mem.indexOf(u8, decl.name, "coyote_");
         if (decl.is_pub and comptime idx != null) {
-            const fn_name = decl.name[idx.?+7..];
+            const fn_name = decl.name[idx.? + 7 ..];
             _ = fn_name;
             log.info("found decl, {s}", .{decl.name});
             inline for (std.meta.fields(@field(@import("root"), decl.name))) |member| {
                 log.info("found member, {s}", .{member.name});
                 comptime var member_type = @field(@import("root"), decl.name){};
-                if(std.mem.eql(u8, member.name, "route")) {
+                if (std.mem.eql(u8, member.name, "route")) {
                     route_pattern = member_type.route;
                     //log.info("found route_pattern, {s}", .{route_pattern});
                 }
-                if(std.mem.eql(u8, member.name, "handler")) {
+                if (std.mem.eql(u8, member.name, "handler")) {
                     route_handler = Handler(member_type.handler);
                     //log.info("found handler, {s}", .{route_handler.?});
                 }
-                if(std.mem.eql(u8, member.name, "flags")) {
+                if (std.mem.eql(u8, member.name, "flags")) {
                     route_flags = member_type.flags;
                     log.info("found flags, {}", .{route_flags});
                 }
             }
-            if(route_pattern != null) {
+
+            if (route_pattern != null) {
                 route = std.mem.zeroes(http.struct_iwn_wf_route);
                 route.pattern = @ptrCast([*:0]const u8, route_pattern.?);
             }
 
-            if(route_handler != undefined)
-                route.handler = route_handler;
-            if(route_flags != 0)
+            route.handler = route_handler;
+            if (route_flags != 0)
                 route.flags = route_flags;
 
             route.ctx = http.ctx;
@@ -210,10 +215,10 @@ pub fn models(self: *Coyote) !void {
             log.info("found Models", .{});
             inline for (@typeInfo(@field(@import("root"), decl.name)).Struct.decls) |child| {
                 log.info("found Models child, {s}", .{child.name});
-                if(child.is_pub) {
+                if (child.is_pub) {
                     inline for (@typeInfo(@field(@field(@import("root"), decl.name), child.name)).Struct.decls) |sub| {
                         log.info("found Sub child, {s}", .{sub.name});
-                        if(std.mem.eql(u8, sub.name, "Meta")) {
+                        if (std.mem.eql(u8, sub.name, "Meta")) {
                             //
                         }
                     }
@@ -225,9 +230,8 @@ pub fn models(self: *Coyote) !void {
 }
 
 pub fn queryValue(req: Request, key: []const u8) !?[]u8 {
-
     var value: Value = http.iwn_pair_find_val(&req.*.query_params, @ptrCast([*c]const u8, key), @intCast(isize, key.len));
-    if(value.buf != 0) {
+    if (value.buf != 0) {
         var found = std.mem.sliceTo(value.buf, 0);
         return found;
     }
@@ -235,12 +239,11 @@ pub fn queryValue(req: Request, key: []const u8) !?[]u8 {
 }
 
 pub fn multiQueryValue(req: Request, key: []const u8) !std.ArrayList([]u8) {
-
     var value_array: std.ArrayList([]u8) = std.ArrayList([]u8).init(allocator);
     var value: Value = http.iwn_pair_find_val(&req.*.query_params, @ptrCast([*c]const u8, key), @intCast(isize, key.len));
-    while(value.buf != 0) {
+    while (value.buf != 0) {
         try value_array.append(std.mem.sliceTo(value.buf, 0));
-        if(value.next != 0) {
+        if (value.next != 0) {
             value = value.next.*;
         } else {
             break;
@@ -252,9 +255,8 @@ pub fn multiQueryValue(req: Request, key: []const u8) !std.ArrayList([]u8) {
 }
 
 pub fn formValue(req: Request, key: []const u8) !?[]u8 {
-
     var value: Value = http.iwn_pair_find_val(&req.*.form_params, @ptrCast([*c]const u8, key), @intCast(isize, key.len));
-    if(value.buf != 0) {
+    if (value.buf != 0) {
         var found = std.mem.sliceTo(value.buf, 0);
         return found;
     }
@@ -263,12 +265,11 @@ pub fn formValue(req: Request, key: []const u8) !?[]u8 {
 
 //Fix?
 pub fn multiFormValue(req: Request, key: []const u8) !std.ArrayList([]u8) {
-
     var value_array: std.ArrayList([]u8) = std.ArrayList([]u8).init(allocator);
     var value: Value = http.iwn_pair_find_val(&req.*.form_params, @ptrCast([*c]const u8, key), @intCast(isize, key.len));
-    while(value.buf != 0) {
+    while (value.buf != 0) {
         try value_array.append(std.mem.sliceTo(value.buf, 0));
-        if(value.next != 0) {
+        if (value.next != 0) {
             value = value.next.*;
         } else {
             break;
@@ -283,7 +284,6 @@ pub fn multiFormValue(req: Request, key: []const u8) !std.ArrayList([]u8) {
 pub fn config(self: *Coyote, conf: anytype) !void {
     try ec(http.iwn_poller_create(0, 0, &http.poller));
     spec = std.mem.zeroes(http.iwn_wf_server_spec);
-
     inline for (std.meta.fields(@TypeOf(conf))) |member| {
         @field(spec, member.name) = @field(conf, member.name);
     }
@@ -305,11 +305,11 @@ pub fn run(self: *Coyote) !void {
 //Destruct any allocations
 pub fn deinit(self: *Coyote) void {
     var iter = cache.?.template.iterator();
-    while(iter.next()) |kv| {
+    while (iter.next()) |kv| {
         kv.value_ptr.deinit(allocator);
     }
-    
-    if(db_engine != null)
+
+    if (db_engine != null)
         db_engine.?.deinit();
 
     log.info("deinit()", .{});
@@ -317,7 +317,7 @@ pub fn deinit(self: *Coyote) void {
 }
 
 pub fn ec(err: u64) !void {
-    switch(err) {
+    switch (err) {
         0 => return,
         else => return error.IWNetError,
     }
