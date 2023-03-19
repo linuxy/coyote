@@ -13,18 +13,6 @@ pub fn build(b: *std.build.Builder) void {
         .name = "example_template",
     });
 
-    exe.addAnonymousModule("mustache", .{ 
-        .source_file = .{ .path = "./vendor/mustache/src/mustache.zig" },
-    });
-
-    exe.addAnonymousModule("iwnet", .{ 
-        .source_file = .{ .path = "./vendor/iwnet.zig" },
-    });
-
-    exe.addAnonymousModule("zq", .{ 
-        .source_file = .{ .path = "./vendor/zq/src/zq.zig" },
-    });
-
     const zig_iwnet = b.createModule(.{ .source_file = .{ .path = "./vendor/iwnet.zig" } });
     const zig_mustache = b.createModule(.{ .source_file = .{ .path = "./vendor/mustache/src/mustache.zig" } });
     const zig_zq = b.createModule(.{ .source_file = .{ .path = "./vendor/zq/src/zq.zig" } });
