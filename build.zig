@@ -1,36 +1,42 @@
 const std = @import("std");
 
-const pkgs = struct {
-    const mustache = std.build.Pkg{
-        .name = "mustache",
-        .source = .{ .path = "./vendor/mustache/src/mustache.zig" },
-    };
-    const iwnet = std.build.Pkg{
-        .name = "iwnet",
-        .source = .{ .path = "./vendor/iwnet.zig" },
-    };
-    const zq = std.build.Pkg{
-        .name = "zq",
-        .source = .{ .path = "./vendor/zq/src/zq.zig" },
-    };
-    const coyote = std.build.Pkg{
-        .name = "coyote",
-        .source = .{ .path = "./src/coyote.zig" },
-        .dependencies = &[_]std.build.Pkg{ pkgs.iwnet, pkgs.mustache, pkgs.zq },
-    };
-};
-
 pub fn build(b: *std.build.Builder) void {
-    const mode = b.standardReleaseOptions();
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
 
     const iwnet = build_iwnet(b);
 
-    const exe = b.addExecutable("example_template", "examples/coyote_template.zig");
-    exe.setBuildMode(mode);
-    exe.addPackage(pkgs.mustache);
-    exe.addPackage(pkgs.iwnet);
-    exe.addPackage(pkgs.zq);
-    exe.addPackage(pkgs.coyote);
+    const exe = b.addExecutable(.{
+        .root_source_file = .{ .path = "examples/coyote_template.zig"},
+        .optimize = optimize,
+        .target = target,
+        .name = "example_template",
+    });
+
+    exe.addAnonymousModule("mustache", .{ 
+        .source_file = .{ .path = "./vendor/mustache/src/mustache.zig" },
+    });
+
+    exe.addAnonymousModule("iwnet", .{ 
+        .source_file = .{ .path = "./vendor/iwnet.zig" },
+    });
+
+    exe.addAnonymousModule("zq", .{ 
+        .source_file = .{ .path = "./vendor/zq/src/zq.zig" },
+    });
+
+    const zig_iwnet = b.createModule(.{ .source_file = .{ .path = "./vendor/iwnet.zig" } });
+    const zig_mustache = b.createModule(.{ .source_file = .{ .path = "./vendor/mustache/src/mustache.zig" } });
+    const zig_zq = b.createModule(.{ .source_file = .{ .path = "./vendor/zq/src/zq.zig" } });
+
+    exe.addAnonymousModule("coyote", .{ 
+        .source_file = .{ .path = "./src/coyote.zig" },
+        .dependencies = &[_]std.Build.ModuleDependency {
+            .{ .name = "iwnet", .module = zig_iwnet },
+            .{ .name = "mustache", .module = zig_mustache },
+            .{ .name = "zq", .module = zig_zq },
+        },
+    });
 
     exe.addLibraryPath("./vendor/iwnet/build/src");
     exe.addLibraryPath("./vendor/iwnet/build/lib");

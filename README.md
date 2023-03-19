@@ -1,7 +1,7 @@
 # coyote
 a small web framework bolted onto iwnet
 
-Builds against zig 0.11.0-dev.944+a193ec432+
+Builds against zig 0.11.0-dev.1605+abc9530a8
 
 ```git clone --recursive https://github.com/linuxy/coyote.git```
 
