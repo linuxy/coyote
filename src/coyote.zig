@@ -68,19 +68,15 @@ const Cache = struct {
     }
 };
 
-var global_fn: ?*const fn (req: Request, data: Data) u32 = undefined;
-
 //This removes the callconv requirement
-//TODO: Unpack and repack the Request struct w/ Zig types
-pub fn Handler(callback_fn: ?*const fn (req: Request, user_data: Data) u32) ?*const fn (req: Request, user_data: Data) callconv(.C) c_int {
-    global_fn = callback_fn;
+pub fn Handler(comptime callback_fn: ?*const fn (req: Request, user_data: Data) u32) ?*const fn (req: Request, user_data: Data) callconv(.C) c_int {
 
-    const cb = struct {
+    const cb = comptime struct {
         pub fn cb(
             req: Request,
             user_data: Data,
         ) callconv(.C) c_int {
-            return @intCast(c_int, global_fn.?(req, user_data));
+            return @intCast(c_int, callback_fn.?(req, user_data));
         }
     }.cb;
 
